@@ -18,10 +18,11 @@ return new class extends Migration
             $table->string('kategori');
             $table->integer('urutan');
             $table->text('bacaan')->nullable();
-            $table->string('video_url')->nullable(); // Menyimpan ID Youtube
-            $table->string('pdf_path')->nullable();  // Path file di storage
+            $table->string('video_url')->nullable(); 
+            $table->string('pdf_path')->nullable(); 
             $table->text('instruksi_coding')->nullable();
             $table->text('starter_code')->nullable();
+            $table->json('kuis_data')->nullable();
             $table->timestamps();
             });
     }

@@ -15,6 +15,7 @@ class SubMateris extends Model
     protected $fillable = [
         'materi_id',
         'judul',
+        'tipe',
         'kategori',
         'urutan',
         'bacaan',
@@ -22,9 +23,14 @@ class SubMateris extends Model
         'pdf_path',
         'instruksi_coding',
         'starter_code',
+        'kuis_data',
     ];
     public function materi(): BelongsTo
     {
         return $this->belongsTo(Materis::class, 'materi_id');
+    }
+    public function kuis()
+    {
+        return $this->hasMany(SubMateriKuis::class, 'sub_materi_id');
     }
 }

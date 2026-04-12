@@ -21,7 +21,6 @@
         </div>
 
         <div class="flex items-center gap-3">
-            {{-- Sesuaikan route ini ke halaman Studio (Create) --}}
             <a href="{{ route('guru.submateri.create', $materi->id) }}" class="bg-slate-900 text-white px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 transition shadow-xl shadow-slate-200">
                 <i class="fas fa-plus mr-2"></i> Tambah Bab Baru
             </a>
@@ -63,7 +62,12 @@
                                         <i class="fas fa-file-code mr-1 text-emerald-500"></i> Lab
                                     </span>
                                 @endif
-
+                                {{-- Indikator Kuis --}}
+                                @if($sub->tipe === 'kuis')
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">
+                                        <i class="fas fa-tasks mr-1 text-amber-500"></i> Kuis
+                                    </span>
+                                @endif
                                 {{-- Kategori Badge --}}
                                 <span class="text-[9px] px-2 py-0.5 bg-slate-100 text-slate-500 rounded-lg font-bold uppercase tracking-tighter">
                                     {{ $sub->kategori }}

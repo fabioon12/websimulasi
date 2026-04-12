@@ -55,7 +55,7 @@
                 <i class="fas fa-chart-line"></i>
             </div>
             <h3 class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Avg. Progres Siswa</h3>
-            <p class="text-3xl font-black text-white">78%</p>
+            <p class="text-3xl font-black text-white">{{ $avgProgress }}</p>
         </div>
     </div>
 

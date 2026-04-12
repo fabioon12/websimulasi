@@ -8,6 +8,7 @@ use App\Models\Materis;
 use App\Models\SubMateris;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Models\SubMateriKuis;
 
 class SubmateriController extends Controller
 {
@@ -24,6 +25,7 @@ class SubmateriController extends Controller
             'total' => $subMateris->count(),
             'video' => $subMateris->whereNotNull('video_url')->count(),
             'coding' => $subMateris->whereNotNull('instruksi_coding')->count(),
+            'kuis'   => $subMateris->where('tipe', 'kuis')->count(),
         ];
 
         return view('guru.submateri.index', compact('materi', 'subMateris', 'stats', 'materi_id'));
@@ -44,7 +46,7 @@ class SubmateriController extends Controller
             'materi' => 'required|array',
             'materi.*.judul' => 'required|string|max:255',
             'materi.*.urutan' => 'required|integer',
-            'materi.*.pdf_file' => 'nullable|file|mimes:pdf|max:10240', // Max 10MB
+            'materi.*.tipe' => 'required|in:materi,kuis', // Tambahkan validasi tipe
         ]);
 
         try {
@@ -54,41 +56,59 @@ class SubmateriController extends Controller
                 $subMateri = new SubMateris();
                 $subMateri->materi_id = $request->materi_id;
                 $subMateri->judul = $data['judul'];
+                $subMateri->tipe = $data['tipe']; 
                 $subMateri->kategori = $data['kategori'] ?? 'Web Development';
                 $subMateri->urutan = $data['urutan'];
-                $subMateri->bacaan = $data['bacaan'];
-                $subMateri->video_url = $data['video'];
-                $subMateri->instruksi_coding = $data['instruksi'];
-                $subMateri->starter_code = $data['kode'];
+                
+                // Data materi hanya diisi jika tipe adalah 'materi'
+                $subMateri->bacaan = $data['bacaan'] ?? null;
+                $subMateri->video_url = $data['video'] ?? null;
+                $subMateri->instruksi_coding = $data['instruksi'] ?? null;
+                $subMateri->starter_code = $data['kode'] ?? null;
 
                 if (isset($data['pdf_file'])) {
-                    $file = $data['pdf_file'];
-                    $path = $file->store('modul_pdf', 'public'); 
-                    $subMateri->pdf_path = $path;
+                    $subMateri->pdf_path = $data['pdf_file']->store('modul_pdf', 'public');
                 }
 
                 $subMateri->save();
+
+                // --- BAGIAN BARU: SIMPAN SOAL KUIS ---
+                if ($data['tipe'] === 'kuis' && isset($data['kuis_data'])) {
+                    $questions = is_array($data['kuis_data']) ? $data['kuis_data'] : json_decode($data['kuis_data'], true);
+                    
+                    foreach ($questions as $q) {
+                        SubMateriKuis::create([
+                            'sub_materi_id' => $subMateri->id,
+                            'pertanyaan'    => $q['pertanyaan'],
+                            'gambar_pertanyaan' => $q['gambar_pertanyaan'] ?? null, // Simpan URL Gambar
+                            'point'         => $q['point'] ?? 10,               // Simpan Poin
+                            'opsi_a'        => $q['opsi_a'],
+                            'opsi_a_img'    => $q['opsi_a_img'] ?? null,        // Gambar Opsi A
+                            'opsi_b'        => $q['opsi_b'],
+                            'opsi_b_img'    => $q['opsi_b_img'] ?? null,        // Gambar Opsi B
+                            'opsi_c'        => $q['opsi_c'],
+                            'opsi_c_img'    => $q['opsi_c_img'] ?? null,        // Gambar Opsi C
+                            'opsi_d'        => $q['opsi_d'],
+                            'opsi_d_img'    => $q['opsi_d_img'] ?? null,        // Gambar Opsi D
+                            'jawaban'       => $q['jawaban'],
+                            
+                        ]);
+                    }
+                }
             }
 
             DB::commit();
-
-            return response()->json([
-                'status' => 'success',
-                'message' => count($request->materi) . ' materi berhasil dipublikasikan!'
-            ]);
+            return response()->json(['status' => 'success', 'message' => 'Data berhasil disimpan!']);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
     public function edit($materi_id, $id)
     {
   
-        $subMateri = SubMateris::findOrFail($id);
+        $subMateri = SubMateris::with('kuis')->findOrFail($id);
         
   
         return view('guru.submateri.edit', compact('subMateri', 'materi_id'));
@@ -96,55 +116,100 @@ class SubmateriController extends Controller
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'judul' => 'required|string|max:255',
-            'urutan' => 'required|integer',
-            'pdf_file' => 'nullable|file|mimes:pdf|max:10240',
-        ]);
+        try {
+            DB::beginTransaction(); // Gunakan transaksi agar data aman
 
-        $sub = SubMateris::findOrFail($id);
-        
-        $sub->judul = $request->judul;
-        $sub->kategori = $request->kategori;
-        $sub->urutan = $request->urutan;
-        $sub->bacaan = $request->bacaan;
-        $sub->video_url = $request->video_url;
-        $sub->instruksi_coding = $request->instruksi_coding;
-        $sub->starter_code = $request->starter_code;
+            $request->validate([
+                'judul' => 'required|string|max:255',
+                'urutan' => 'required|integer',
+                'pdf_file' => 'nullable|file|mimes:pdf|max:10240',
+                'tipe' => 'required|in:materi,kuis',
+            ]);
 
-        if ($request->hasFile('pdf_file')) {
-            // Hapus PDF lama jika ada
-            if ($sub->pdf_path) {
-                Storage::disk('public')->delete($sub->pdf_path);
+            $sub = SubMateris::findOrFail($id);
+            $sub->judul = $request->judul;
+            $sub->kategori = $request->kategori;
+            $sub->urutan = $request->urutan;
+            $sub->tipe = $request->tipe;
+
+            if ($request->tipe !== 'kuis') {
+                // Logika Update Materi Biasa
+                $sub->bacaan = $request->bacaan;
+                $sub->video_url = $request->video_url; 
+                $sub->instruksi_coding = $request->instruksi_coding;
+                $sub->starter_code = $request->starter_code;
+                
+                if ($request->hasFile('pdf_file')) {
+                    if ($sub->pdf_path) {
+                        Storage::disk('public')->delete($sub->pdf_path);
+                    }
+                    $sub->pdf_path = $request->file('pdf_file')->store('modul_pdf', 'public');
+                }
+            } else {
+                // --- LOGIKA UPDATE KUIS ---
+                // 1. Hapus soal-soal lama yang ada di SubMateriKuis
+                $sub->kuis()->delete(); 
+
+                // 2. Ambil data kuis baru dari request (JSON string)
+                $questions = is_array($request->kuis_data) 
+                            ? $request->kuis_data 
+                            : json_decode($request->kuis_data, true);
+
+                if ($questions) {
+                    foreach ($questions as $q) {
+                        SubMateriKuis::create([
+                            'sub_materi_id'     => $sub->id,
+                            'pertanyaan'        => $q['pertanyaan'],
+                            'gambar_pertanyaan' => $q['gambar_pertanyaan'] ?? null,
+                            'point'             => $q['point'] ?? 10,
+                            'opsi_a'            => $q['opsi_a'],
+                            'opsi_a_img'        => $q['opsi_a_img'] ?? null,
+                            'opsi_b'            => $q['opsi_b'],
+                            'opsi_b_img'        => $q['opsi_b_img'] ?? null,
+                            'opsi_c'            => $q['opsi_c'],
+                            'opsi_c_img'        => $q['opsi_c_img'] ?? null,
+                            'opsi_d'            => $q['opsi_d'],
+                            'opsi_d_img'        => $q['opsi_d_img'] ?? null,
+                            'jawaban'           => $q['jawaban'],
+                        ]);
+                    }
+                }
             }
-            $sub->pdf_path = $request->file('pdf_file')->store('modul_pdf', 'public');
+
+            $sub->save();
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Materi dan Kuis berhasil diperbarui',
+                'materi_id' => $sub->materi_id
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
-
-        $sub->save();
-
-        return redirect()->route('guru.submateri.dashboard', $sub->materi_id)
-                        ->with('success', 'Sub materi berhasil diperbarui!');
     }
     public function destroy($id)
     {
         try {
-            // 1. Cari submateri yang akan dihapus
+
             $subMateri = SubMateris::findOrFail($id);
             
-            // Simpan ID materi induk untuk keperluan redirect nanti
+    
             $materiIdInduk = $subMateri->materi_id;
 
-            // 2. Hapus file PDF dari storage jika ada
+   
             if ($subMateri->pdf_path) {
                 if (Storage::disk('public')->exists($subMateri->pdf_path)) {
                     Storage::disk('public')->delete($subMateri->pdf_path);
                 }
             }
 
-            // 3. Hapus data dari database
+     
             $subMateri->delete();
 
-            // 4. Redirect kembali ke dashboard submateri spesifik tadi
+  
             return redirect()->route('guru.submateri.dashboard', $materiIdInduk)
                             ->with('success', 'Sub materi berhasil dihapus!');
 
@@ -163,5 +228,18 @@ class SubmateriController extends Controller
                 'url' => asset('storage/' . $path)
             ]);
         }
+    }
+    public function uploadAttachment(Request $request)
+    {
+        if ($request->hasFile('file')) {
+            // Simpan file ke folder 'public/attachments'
+            $path = $request->file('file')->store('attachments', 'public');
+            
+            return response()->json([
+                'url' => asset('storage/' . $path)
+            ]);
+        }
+        
+        return response()->json(['error' => 'No file uploaded'], 400);
     }
 }

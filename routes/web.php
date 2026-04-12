@@ -60,6 +60,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('proyek/roadmap/{id}', [GuruProyekController::class, 'destroyRoadmap'])->name('proyek.roadmap.destroy');
         Route::post('/trix/upload', [GuruProyekController::class, 'uploadTrix'])->name('proyek.trix.upload');
         Route::get('/proyek/{id}/edit', [GuruProyekController::class, 'edit'])->name('proyek.edit');
+        Route::post('/submateri/upload-attachment', [GuruSubmateriController::class, 'uploadAttachment'])->name('submateri.uploadAttachment');
         Route::put('/proyek/{id}', [GuruProyekController::class, 'update'])->name('proyek.update');
         Route::put('proyek/roadmap/{id}', [GuruProyekController::class, 'updateRoadmap'])->name('proyek.roadmap.update');
         Route::get('proyek/review-tugas', [ReviewTugasController::class, 'index'])->name('review.index');

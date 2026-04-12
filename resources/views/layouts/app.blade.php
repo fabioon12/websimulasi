@@ -118,7 +118,7 @@
                 <div class="col-span-2">
                     <div class="flex items-center gap-3 mb-6">
                         <div class="bg-blue-600 p-2 rounded-lg text-white">
-                            <i class="fas fa-terminal"></i>
+                            <i class="fas fa-laptop-code text-white text-xl"></i>
                         </div>
                         <span class="font-bold text-2xl tracking-tight">CodeLab</span>
                     </div>

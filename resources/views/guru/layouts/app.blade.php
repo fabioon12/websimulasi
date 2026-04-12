@@ -74,8 +74,8 @@
                 <p x-show="!sidebarCollapsed" class="px-4 mt-8 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-4">Akademik Siswa</p>
 
                 <a href="{{ route('guru.leaderboard.index') }}" class="flex items-center gap-4 px-4 py-3 rounded-xl font-bold transition {{ Request::is('guru/leaderboard*') ? 'sidebar-active' : 'text-slate-500 hover:bg-slate-50' }}">
-                    <i class="fas fa-comments w-5 shrink-0 text-center"></i>
-                    <span x-show="!sidebarCollapsed" x-transition.opacity>Ruang Diskusi</span>
+                    <i class="fas fa-users w-5 shrink-0 text-center"></i>
+                    <span x-show="!sidebarCollapsed" x-transition.opacity>Leaderboard Siswa</span>
                 </a>
             </nav>
         </div>
@@ -88,13 +88,16 @@
                     <p class="text-[9px] text-emerald-600 font-bold uppercase mt-1">Mentor Utama</p>
                 </div>
             </div>
-            <form action="/logout" method="POST">
+           <form action="{{ route('logout') }}" method="POST" id="logout-form" class="hidden">
                 @csrf
-                <button type="submit" class="flex items-center gap-4 px-4 py-3 w-full rounded-xl font-bold text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition group">
+   
+            </form>
+                <button type="button" 
+                    onclick="confirmLogout()" 
+                    class="flex items-center gap-4 px-4 py-3 w-full rounded-xl font-bold text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition group">
                     <i class="fas fa-arrow-right-from-bracket w-5 shrink-0 text-center"></i>
                     <span x-show="!sidebarCollapsed" x-transition.opacity>Keluar Portal</span>
                 </button>
-            </form>
         </div>
     </aside>
 
@@ -166,6 +169,30 @@
                 confirmButtonColor: '#2563eb',
             });
         @endif
+    </script>
+     <script>
+        function confirmLogout() {
+            Swal.fire({
+                title: 'Ingin Keluar?',
+                text: "Sesi Anda akan berakhir dan Anda harus login kembali.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#2563eb', // Biru CodeLab
+                cancelButtonColor: '#f1f5f9',
+                confirmButtonText: 'Ya, Keluar!',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                customClass: {
+                    popup: 'rounded-[2rem]',
+                    confirmButton: 'rounded-xl px-6 py-3 font-bold',
+                    cancelButton: 'rounded-xl px-6 py-3 font-bold text-slate-600'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('logout-form').submit();
+                }
+            });
+        }
     </script>
     </div>
     @stack('scripts')

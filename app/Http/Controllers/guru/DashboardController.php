@@ -39,7 +39,6 @@ public function index()
             ->take(5)
             ->get();
 
-   
         $statsChart = [
             'diterima' => PengumpulanTugas::where('status', 'diterima')->count(),
             'pending' => $tugasPending,
@@ -55,13 +54,16 @@ public function index()
             ->groupBy('proyek_roles.nama_role')
             ->get();
 
+        $avgProgress =ProyekSiswa::avg('progress') ?? 0;
+        $avgProgress = round($avgProgress);
         return view('guru.dashboard.index', compact(
             'totalSiswa', 
             'proyekAktif', 
             'tugasPending', 
             'recentSubmissions', 
             'statsChart',
-            'roleDistribution' 
+            'roleDistribution',
+            'avgProgress'
         ));
     }
 }
