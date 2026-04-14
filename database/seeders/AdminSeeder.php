@@ -47,6 +47,16 @@ class AdminSeeder extends Seeder
             'major' => 'Rekayasa Perangkat Lunak',
         ]);
 
+        User::create([
+            'name' => 'Naufal Pratama',
+            'email' => 'naufal@codelab.com',
+            'password' => Hash::make('password123'), 
+            'role' => 'siswa', 
+            'identity_number' => '202400012',
+            'class' => 'XI-RPL-1',
+            'major' => 'Rekayasa Perangkat Lunak',
+        ]);
+
         $this->command->info('Data Admin, Guru, dan Siswa berhasil dibuat!');
     }
 }

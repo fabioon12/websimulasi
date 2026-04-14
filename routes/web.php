@@ -14,6 +14,14 @@ use App\Http\Controllers\siswa\ProyekController as SiswaProyekController;
 use App\Http\Controllers\guru\ReviewTugasController;
 use App\Http\Controllers\siswa\LeaderboardController;
 use App\Http\Controllers\guru\LeaderboardController as GuruLeaderboardController;
+use App\Http\Controllers\siswa\proposalcontroller;
+use App\Http\Controllers\guru\ProposalApprovalController;
+use App\Http\Controllers\siswa\WorkspaceController;
+use App\Http\Controllers\guru\WorkspaceController as GuruWorkspaceController;
+use App\Http\Controllers\siswa\LogbookController;
+use App\Http\Controllers\siswa\MilestoneController;
+use App\Http\Controllers\guru\MilestoneController as GuruMilestoneController;
+use App\Http\Controllers\guru\LogbookController as GuruLogbookController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/', function () {
@@ -66,7 +74,18 @@ Route::middleware(['auth'])->group(function () {
         Route::get('proyek/review-tugas', [ReviewTugasController::class, 'index'])->name('review.index');
         Route::patch('proyek/review-tugas/{id}', [ReviewTugasController::class, 'update'])->name('review.update');
 
+        Route::get('/proposal', [ProposalApprovalController::class, 'index'])->name('proposal.index');
+        Route::post('/proposal/{id}/approve', [ProposalApprovalController::class, 'approve'])->name('proposal.approve');
+        Route::post('/proposal/{id}/reject', [ProposalApprovalController::class, 'reject'])->name('proposal.reject');
+
+        Route::get('/workspace/dashboard', [GuruWorkspaceController::class, 'index'])->name('workspace.index');
         Route::get('leaderboard', [GuruLeaderboardController::class, 'index'])->name('leaderboard.index');
+
+        Route::get('workspace/milestone-review', [GuruMilestoneController::class, 'index'])->name('milestone.index');
+        Route::patch('workspace/milestone-review/{id}', [GuruMilestoneController::class, 'update'])->name('milestone.update');
+
+        Route::get('workspace/monitoring/{id}/logbook', [GuruLogbookController::class, 'logbook'])->name('monitoring.logbook');
+        Route::patch('workspace/logbook/{id}/feedback', [GuruLogbookController::class, 'updateFeedback'])->name('logbook.feedback');
     });
     // Siswa
     Route::middleware(['role:siswa'])->prefix('siswa')->name('siswa.')->group(function () {
@@ -83,10 +102,26 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/proyek/workspace/{id}', [SiswaProyekController::class, 'show'])->name('proyek.pengerjaan');
         Route::post('/upload-trix', [SiswaProyekController::class, 'uploadTrix'])->name('trix.upload');
         Route::post('/tugas/submit', [SiswaProyekController::class, 'store'])->name('tugas.store');
-
+        Route::get('/workspace/create', [proposalController::class, 'create'])->name('proposal.create');
+        Route::post('/workspace/store', [proposalController::class, 'store'])->name('proposal.store');
+        Route::get('/workspace', [WorkspaceController::class, 'index'])->name('workspace.index');
+        Route::get('/workspace/{id}', [WorkspaceController::class, 'show'])->name('workspace.show');
         Route::get('/leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard');
-        
+        Route::get('/invitations', [proposalController::class, 'invitations'])->name('invitation.index');
+        Route::post('/invitations/{id}/{status}', [proposalController::class, 'respondInvitation'])->name('invitation.respond');
+
+        Route::get('/workspace/{id}/logbook', [LogbookController::class, 'index'])->name('logbook.index');
+    
+        Route::post('/workspace/{id}/logbook', [LogbookController::class, 'store'])->name('logbook.store');
+        Route::get('/workspace/{id}/milestones', [MilestoneController::class, 'index'])->name('milestone.index');
+    
+
+        Route::post('/workspace/{id}/milestones', [MilestoneController::class, 'store'])->name('milestone.store');
+        Route::patch('/milestone/{id}/complete', [MilestoneController::class, 'complete'])->name('milestone.complete');
+
+
     });
 });
+
 
 

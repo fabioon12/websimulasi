@@ -19,6 +19,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        view()->composer('*', function ($view) {
+            if (auth()->check() && auth()->user()->role === 'guru') {
+         
+                $pendingCount = \App\Models\Proposal::where('status', 'pending')->count();
+                $view->with('pendingCount', $pendingCount);
+            }
+        });
     }
 }

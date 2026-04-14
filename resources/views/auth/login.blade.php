@@ -75,7 +75,7 @@
 
                         <div>
                             <label class="block text-sm font-bold text-slate-700 mb-3 ml-1">Masuk Sebagai</label>
-                            <div class="grid grid-cols-3 gap-3">
+                            <div class="grid grid-cols-2 gap-2">
                                 <label class="cursor-pointer">
                                     <input type="radio" name="role" value="siswa" class="peer hidden" 
                                         {{ old('role', 'siswa') == 'siswa' ? 'checked' : '' }}>
@@ -94,14 +94,14 @@
                                     </div>
                                 </label>
 
-                                <label class="cursor-pointer">
+                                <!-- <label class="cursor-pointer">
                                     <input type="radio" name="role" value="admin" class="peer hidden" 
                                         {{ old('role') == 'admin' ? 'checked' : '' }}>
                                     <div class="text-center p-3 rounded-xl border border-slate-100 bg-slate-50 peer-checked:bg-blue-600 peer-checked:text-white transition shadow-sm">
                                         <i class="fas fa-user-shield block mb-1"></i>
                                         <span class="text-[10px] font-bold uppercase">Admin</span>
                                     </div>
-                                </label>
+                                </label> -->
                             </div>
                         </div>
 

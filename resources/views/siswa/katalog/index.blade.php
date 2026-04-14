@@ -163,9 +163,9 @@
                 </p>
             </div>
             
-            <button class="relative z-10 bg-white text-slate-900 px-10 py-5 rounded-[1.5rem] font-black text-sm hover:scale-105 hover:bg-blue-50 transition-all duration-300 shadow-2xl">
+            <a href="{{ route('siswa.proposal.create') }}" class="inline-block relative z-10 bg-white text-slate-900 px-10 py-5 rounded-[1.5rem] font-black text-sm hover:scale-105 hover:bg-blue-50 transition-all duration-300 shadow-2xl">
                 Ajukan Sekarang <i class="fas fa-paper-plane ml-2"></i>
-            </button>
+            </a>
         </div>
     </div>
 </div>
