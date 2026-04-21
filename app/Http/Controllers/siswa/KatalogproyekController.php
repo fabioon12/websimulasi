@@ -61,10 +61,16 @@ class KatalogproyekController extends Controller
     }
     public function show($id)
     {
-        $proyek = Proyeks::with(['guru', 'roles.roadmaps' => function($query) {
-            $query->orderBy('urutan', 'asc');
-        }])->findOrFail($id);
+        // Tambahkan 'roles.users' ke dalam with()
+        $proyek = Proyeks::with([
+            'guru', 
+            'roles.users', // <-- Tambahkan ini agar data siswa yang ambil role terdeteksi
+            'roles.roadmaps' => function($query) {
+                $query->orderBy('urutan', 'asc');
+            }
+        ])->findOrFail($id);
 
+        // Menghitung total poin (Opsional: jika ingin lebih efisien bisa pakai sum di query)
         $totalPoin = 0;
         foreach($proyek->roles as $role) {
             $totalPoin += $role->roadmaps->sum('poin');
@@ -95,6 +101,7 @@ class KatalogproyekController extends Controller
         $proyekId = $request->proyek_id;
         $roleId = $request->proyek_role_id;
 
+        // 1. Cek apakah user sudah join proyek apapun (atau proyek ini)
         $sudahJoin = DB::table('proyek_siswa')
             ->where('proyek_id', $proyekId)
             ->where('user_id', $userId)
@@ -104,6 +111,15 @@ class KatalogproyekController extends Controller
             return redirect()->back()->with('error', 'Kamu sudah bergabung dalam proyek ini!');
         }
 
+        // 2. PROTEKSI KRUSIAL: Cek apakah ROLE ini sudah diambil orang lain tepat sebelum insert
+        $roleSudahDiambil = DB::table('proyek_siswa')
+            ->where('proyek_id', $proyekId)
+            ->where('proyek_role_id', $roleId)
+            ->exists();
+
+        if ($roleSudahDiambil) {
+            return redirect()->back()->with('error', 'Maaf, role ini baru saja diambil oleh siswa lain.');
+        }
 
         $proyek = Proyeks::findOrFail($proyekId);
         $jumlahPeserta = DB::table('proyek_siswa')->where('proyek_id', $proyekId)->count();
@@ -111,7 +127,6 @@ class KatalogproyekController extends Controller
         if ($jumlahPeserta >= $proyek->max_siswa) {
             return redirect()->back()->with('error', 'Maaf, kuota proyek ini sudah penuh.');
         }
-
 
         DB::beginTransaction();
         try {
@@ -128,12 +143,15 @@ class KatalogproyekController extends Controller
 
             DB::commit();
 
+            // Ambil nama role untuk pesan sukses
+            $namaRole = DB::table('proyek_roles')->where('id', $roleId)->value('nama_role');
+
             return redirect()->route('siswa.proyek.pengerjaan', $proyekId)
-                ->with('success', 'Selamat! Kamu berhasil bergabung sebagai ' . Proyek_roles::find($roleId)->nama_role);
+                ->with('success', 'Selamat! Kamu berhasil bergabung sebagai ' . $namaRole);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Gagal bergabung, coba lagi nanti.');
+            return redirect()->back()->with('error', 'Gagal bergabung: ' . $e->getMessage());
         }
     }
 }

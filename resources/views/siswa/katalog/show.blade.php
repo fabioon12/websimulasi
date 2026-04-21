@@ -3,7 +3,7 @@
 @section('title', 'Preview Proyek - CodeLab')
 
 @section('content')
-{{-- 1. WAJIB: Load CSS Trix agar layout gambar & attachment ter-render otomatis --}}
+{{-- Load CSS Trix --}}
 <link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2.0.8/dist/trix.css">
 
 <div class="max-w-[1200px] mx-auto pb-20 px-4 md:px-0">
@@ -23,23 +23,18 @@
         {{-- SISI KIRI: KONTEN UTAMA --}}
         <div class="lg:col-span-8 space-y-12">
 
-            {{-- Hero Info Card (Sekarang mencakup Gambar & Info) --}}
+            {{-- Hero Info Card --}}
             <div class="bg-white rounded-[3.5rem] p-10 md:p-14 border border-slate-100 shadow-sm relative overflow-hidden">
                 <div class="relative z-10 space-y-8">
-                    
-                    {{-- GABUNGAN GAMBAR & HEADER INFO --}}
                     <div class="flex flex-col md:flex-row gap-8 items-start">
-                        {{-- Thumbnail/Cover Proyek (Sama seperti di Katalog) --}}
+                        {{-- Thumbnail Cover --}}
                         <div class="relative group overflow-hidden rounded-[2.5rem] bg-slate-200 w-full md:w-56 aspect-[4/3] md:aspect-square flex-shrink-0 border border-slate-100">
                             @php
                                 $thumbnailUrl = $proyek->cover 
                                     ? asset('storage/' . $proyek->cover) 
                                     : 'https://images.unsplash.com/photo-1557821552-17105176677c?q=80&w=800';
                             @endphp
-                            
-                            <img src="{{ $thumbnailUrl }}" 
-                                 alt="{{ $proyek->nama_proyek }}" 
-                                 class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+                            <img src="{{ $thumbnailUrl }}" alt="{{ $proyek->nama_proyek }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
                         </div>
 
                         {{-- Judul & Deskripsi --}}
@@ -53,7 +48,6 @@
                                     <span class="text-[10px] font-black uppercase tracking-widest">{{ $totalPoin ?? 0 }} PTS</span>
                                 </div>
                             </div>
-                            
                             <h1 class="text-3xl md:text-4xl font-black text-slate-900 leading-tight tracking-tight">{{ $proyek->nama_proyek }}</h1>
                             <p class="text-slate-500 font-medium leading-relaxed text-base italic">
                                 "{{ $proyek->deskripsi }}"
@@ -61,7 +55,7 @@
                         </div>
                     </div>
 
-                    {{-- STATS BAR (Bawah) --}}
+                    {{-- Stats Bar --}}
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-6 border-t border-slate-50 pt-8 mt-4">
                         <div class="space-y-1">
                             <p class="text-[9px] font-black text-rose-500 uppercase tracking-widest italic">Deadline Utama</p>
@@ -85,74 +79,98 @@
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 px-4">
                     <h3 class="text-xl font-black text-slate-900 tracking-tight">Eksplorasi Peran & Tugas 🚀</h3>
                     
+                    @php
+                        // Ambil daftar ID role yang sudah terisi untuk proyek ini dari tabel pivot
+                        $roleTerisi = \DB::table('proyek_siswa')
+                            ->where('proyek_id', $proyek->id)
+                            ->pluck('proyek_role_id')
+                            ->toArray();
+
+                        $firstVisibleRole = null;
+                    @endphp
+
                     {{-- Role Switcher Tab --}}
                     <div class="flex bg-slate-100 p-1.5 rounded-2xl overflow-x-auto no-scrollbar">
-                        @foreach($proyek->roles as $index => $role)
-                        <button onclick="switchRole('role-{{ $role->id }}')" 
-                                id="btn-role-{{ $role->id }}" 
-                                class="role-btn whitespace-nowrap px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all {{ $index == 0 ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600' }}">
-                            {{ $role->nama_role }}
-                        </button>
+                        @foreach($proyek->roles as $role)
+                            {{-- Hanya tampilkan tab jika ID role TIDAK ada dalam daftar role yang sudah terisi --}}
+                            @if(!in_array($role->id, $roleTerisi)) 
+                                @if(!$firstVisibleRole) @php $firstVisibleRole = $role->id; @endphp @endif
+                                <button onclick="switchRole('role-{{ $role->id }}')" 
+                                        id="btn-role-{{ $role->id }}" 
+                                        class="role-btn whitespace-nowrap px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all {{ $role->id == $firstVisibleRole ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600' }}">
+                                    {{ $role->nama_role }}
+                                </button>
+                            @endif
                         @endforeach
                     </div>
                 </div>
 
                 <div class="relative">
-                    @foreach($proyek->roles as $index => $role)
-                    <div id="content-role-{{ $role->id }}" class="role-content space-y-4 {{ $index == 0 ? '' : 'hidden' }}">
-                        
-                        {{-- INFO BOX ROLE & TOMBOL JOIN --}}
-                        <div class="bg-blue-600 rounded-[2.5rem] p-8 mb-8 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-blue-200">
-                            <div>
-                                <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-70 mb-1">Anda Sedang Melihat Role</p>
-                                <h4 class="text-2xl font-black uppercase italic">{{ $role->nama_role }}</h4>
-                            </div>
+                    @php $adaRoleTersedia = false; @endphp
 
-                            {{-- Form Join Khusus Role Ini --}}
-                            <form action="{{ route('siswa.proyek.join') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="proyek_id" value="{{ $proyek->id }}">
-                                <input type="hidden" name="proyek_role_id" value="{{ $role->id }}">
-                                <button type="submit" class="px-8 py-4 bg-white text-blue-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-100 transition-all active:scale-95 shadow-lg">
-                                    Join Sebagai {{ $role->nama_role }} <i class="fas fa-arrow-right ml-2"></i>
-                                </button>
-                            </form>
-                        </div>
+                    @foreach($proyek->roles as $role)
+                        @if(!in_array($role->id, $roleTerisi))
+                            @php $adaRoleTersedia = true; @endphp
+                            <div id="content-role-{{ $role->id }}" class="role-content space-y-4 {{ $role->id == $firstVisibleRole ? '' : 'hidden' }}">
+                                
+                                {{-- Info Box & Join Button --}}
+                                <div class="bg-blue-600 rounded-[2.5rem] p-8 mb-8 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-blue-200">
+                                    <div>
+                                        <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-70 mb-1">Anda Sedang Melihat Role</p>
+                                        <h4 class="text-2xl font-black uppercase italic">{{ $role->nama_role }}</h4>
+                                    </div>
 
-                        @forelse($role->roadmaps->sortBy('urutan') as $task)
-                        <div class="group bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm transition-all hover:shadow-md">
-                            <div class="flex items-start gap-6">
-                                {{-- Urutan Badge --}}
-                                <div class="w-14 h-14 bg-slate-50 rounded-2xl flex flex-shrink-0 flex-col items-center justify-center border border-slate-100 group-hover:bg-blue-600 transition-colors">
-                                    <span class="text-[10px] font-black text-slate-400 group-hover:text-blue-200 uppercase">Step</span>
-                                    <span class="text-lg font-black text-slate-900 group-hover:text-white">{{ $task->urutan }}</span>
+                                    <form action="{{ route('siswa.proyek.join') }}" method="POST">
+                                        @csrf
+                                        <input type="hidden" name="proyek_id" value="{{ $proyek->id }}">
+                                        <input type="hidden" name="proyek_role_id" value="{{ $role->id }}">
+                                        <button type="submit" class="px-8 py-4 bg-white text-blue-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-100 transition-all active:scale-95 shadow-lg">
+                                            Join Sebagai {{ $role->nama_role }} <i class="fas fa-arrow-right ml-2"></i>
+                                        </button>
+                                    </form>
                                 </div>
 
-                                <div class="flex-grow min-w-0">
-                                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-4">
-                                        <h4 class="font-black text-slate-900 group-hover:text-blue-600 transition uppercase tracking-tight">{{ $task->judul_tugas }}</h4>
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-[10px] font-black text-blue-500 bg-blue-50 px-3 py-1 rounded-lg border border-blue-100 uppercase">
-                                                {{ $task->poin }} PTS
-                                            </span>
+                                {{-- List Tugas --}}
+                                @forelse($role->roadmaps->sortBy('urutan') as $task)
+                                    <div class="group bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm transition-all hover:shadow-md">
+                                        <div class="flex items-start gap-6">
+                                            <div class="w-14 h-14 bg-slate-50 rounded-2xl flex flex-shrink-0 flex-col items-center justify-center border border-slate-100 group-hover:bg-blue-600 transition-colors">
+                                                <span class="text-[10px] font-black text-slate-400 group-hover:text-blue-200 uppercase">Step</span>
+                                                <span class="text-lg font-black text-slate-900 group-hover:text-white">{{ $task->urutan }}</span>
+                                            </div>
+
+                                            <div class="flex-grow min-w-0">
+                                                <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-4">
+                                                    <h4 class="font-black text-slate-900 group-hover:text-blue-600 transition uppercase tracking-tight">{{ $task->judul_tugas }}</h4>
+                                                    <span class="text-[10px] font-black text-blue-500 bg-blue-50 px-3 py-1 rounded-lg border border-blue-100 uppercase">
+                                                        {{ $task->poin }} PTS
+                                                    </span>
+                                                </div>
+                                                <div class="instruction-content text-xs text-slate-500 font-medium leading-relaxed prose prose-slate max-w-none">
+                                                    {!! $task->instruksi !!}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    
-                                    {{-- KONTEN INSTRUKSI --}}
-                                    <div class="instruction-content text-xs text-slate-500 font-medium leading-relaxed prose prose-slate max-w-none">
-                                        {!! $task->instruksi !!}
+                                @empty
+                                    <div class="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[3rem] p-12 text-center">
+                                        <p class="text-xs font-black text-slate-400 uppercase tracking-widest italic">Tugas Belum Tersedia.</p>
                                     </div>
-                                </div>
+                                @endforelse
                             </div>
-                        </div>
-                        @empty
-                        <div class="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[3rem] p-12 text-center">
-                            <p class="text-xs font-black text-slate-400 uppercase tracking-widest italic">Tugas Belum Tersedia.</p>
-                        </div>
-                        @endforelse
-
-                    </div>
+                        @endif
                     @endforeach
+
+                    {{-- Tampilan jika semua role sudah diambil --}}
+                    @if(!$adaRoleTersedia)
+                        <div class="bg-rose-50 border-2 border-dashed border-rose-100 rounded-[3rem] p-12 text-center">
+                            <div class="w-16 h-16 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-users-slash text-xl"></i>
+                            </div>
+                            <h4 class="text-sm font-black text-rose-900 uppercase tracking-tight mb-1">Pendaftaran Ditutup</h4>
+                            <p class="text-[11px] font-bold text-rose-500 uppercase tracking-widest italic">Maaf, semua posisi peran dalam proyek ini sudah terisi penuh.</p>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -188,49 +206,23 @@
 </div>
 
 <style>
-    /* Styling Dasar Konten Instruksi */
-    .instruction-content {
-        word-break: break-word;
-        color: #64748b;
-    }
-
-    /* Memaksa Gambar Trix Agar Muncul & Bagus */
-    .instruction-content img {
-        max-width: 100% !important;
-        height: auto !important;
-        display: block;
-        margin: 1.5rem 0;
-        border-radius: 1.5rem;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-    }
-
-    /* Styling List (ul/ol) agar muncul di browser */
+    .instruction-content { word-break: break-word; color: #64748b; }
+    .instruction-content img { max-width: 100% !important; height: auto !important; display: block; margin: 1.5rem 0; border-radius: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
     .instruction-content ul { list-style-type: disc !important; padding-left: 1.5rem !important; margin: 1rem 0 !important; }
     .instruction-content ol { list-style-type: decimal !important; padding-left: 1.5rem !important; margin: 1rem 0 !important; }
-    
-    /* Format Teks Bold */
     .instruction-content b, .instruction-content strong { font-weight: 800; color: #1e293b; }
-
-    /* Utility */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    .group:hover .w-14 { transform: scale(1.05) rotate(-2deg); }
 </style>
 
 <script>
     function switchRole(roleId) {
-        // Sembunyikan semua konten role
         document.querySelectorAll('.role-content').forEach(c => c.classList.add('hidden'));
-        
- 
         document.getElementById('content-' + roleId).classList.remove('hidden');
-        
-
         document.querySelectorAll('.role-btn').forEach(b => {
             b.classList.remove('bg-white', 'text-blue-600', 'shadow-sm');
             b.classList.add('text-slate-400');
         });
-        
         const btn = document.getElementById('btn-' + roleId);
         btn.classList.add('bg-white', 'text-blue-600', 'shadow-sm');
         btn.classList.remove('text-slate-400');
