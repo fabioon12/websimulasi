@@ -14,23 +14,27 @@ class WorkspaceController extends Controller
 {
     public function index()
     {
-       $userId = auth()->id();
+        $userId = auth()->id();
 
-
-        $approvedProjects = Proposal::with(['guru', 'anggota.user'])
+        // 1. Ambil proyek yang disetujui + Load milestones untuk hitung progres
+        $approvedProjects = Proposal::with([
+                'guru', 
+                'anggota.user', 
+                'milestones' // Tambahkan ini agar bisa hitung progres di Blade
+            ])
             ->where('status', 'disetujui')
             ->where(function($query) use ($userId) {
-                $query->where('pengaju_id', $userId) // Jika saya ketua
-                    ->orWhereHas('anggota', function($q) use ($userId) { // Atau jika saya anggota
+                $query->where('pengaju_id', $userId) 
+                    ->orWhereHas('anggota', function($q) use ($userId) { 
                         $q->where('user_id', $userId)
-                            ->where('status_konfirmasi', 'setuju'); // Sudah acc undangan
+                            ->where('status_konfirmasi', 'setuju'); 
                     });
             })
             ->latest()
             ->paginate(6, ['*'], 'approved_page')
             ->withQueryString();
 
-
+        // 2. Ambil proyek yang ditolak
         $rejectedProjects = Proposal::where('status', 'ditolak')
             ->where('pengaju_id', $userId)
             ->latest()

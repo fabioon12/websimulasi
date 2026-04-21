@@ -17,9 +17,25 @@
 
         {{-- Tombol Tambah (Hanya untuk Ketua/Pengaju) --}}
         @if(auth()->id() == $project->pengaju_id)
-        <button @click="showAddModal = true" class="px-8 py-4 bg-blue-600 text-white rounded-[2rem] text-[11px] font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-2xl shadow-blue-200">
-            <i class="fas fa-flag mr-2"></i> Tambah Target Baru
-        </button>
+            @if(now()->lessThanOrEqualTo($project->tanggal_selesai))
+                {{-- Tampilan Tombol Aktif --}}
+                <button @click="showAddModal = true" class="px-8 py-4 bg-blue-600 text-white rounded-[2rem] text-[11px] font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-2xl shadow-blue-200">
+                    <i class="fas fa-flag mr-2"></i> Tambah Target Baru
+                </button>
+            @else
+                {{-- Tampilan Indikator Terkunci/Review Mode --}}
+                <div class="flex flex-col items-end gap-2">
+                    <div class="px-6 py-3 bg-slate-100 border border-slate-200 rounded-[2rem] flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></div>
+                        <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                            <i class="fas fa-lock mr-1"></i> Review Mode Only
+                        </span>
+                    </div>
+                    <p class="text-[9px] font-bold text-rose-500 uppercase tracking-tighter italic">
+                        Batas waktu pengerjaan proyek telah berakhir
+                    </p>
+                </div>
+            @endif
         @endif
     </div>
 
@@ -58,18 +74,75 @@
                 </div>
 
                 {{-- Action Footer --}}
-                <div class="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
-                    @if(!$milestone->is_completed && auth()->id() == $project->pengaju_id)
-                        <form action="{{ route('siswa.milestone.complete', $milestone->id) }}" method="POST" class="w-full">
-                            @csrf @method('PATCH')
-                            <button type="submit" class="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg">
-                                Tandai Selesai
-                            </button>
-                        </form>
-                    @elseif($milestone->is_completed)
-                        <div class="flex items-center gap-2 text-emerald-500 font-black text-[10px] uppercase">
-                            <i class="fas fa-check-circle text-lg"></i>
-                            Laporan Terkirim
+                <div class="mt-8 pt-6 border-t border-slate-50 flex flex-col gap-3">
+                    
+                    {{-- CASE 1: JIKA AKSES MASIH TERKUNCI (Project Belum Disetujui ATAU Milestone Belum Disetujui) --}}
+                    {{-- Kita anggap milestone baru boleh diisi jika status_review-nya sudah 'disetujui' oleh guru --}}
+                    @if($project->status != 'disetujui' || $milestone->status_review != 'disetujui')
+                        
+                        <div class="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] p-6 text-center">
+                            
+                            @if(!$milestone->is_completed)
+                                {{-- TAMPILAN: BELUM MENGAJUKAN RENCANA --}}
+                                <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
+                                    <i class="fas fa-paper-plane text-slate-300"></i>
+                                </div>
+                                <h4 class="text-[11px] font-black text-slate-900 uppercase tracking-widest mb-1">Rencana Dalam Peninjauan</h4>
+                                <p class="text-[10px] text-slate-500 font-medium mb-4">Silahkan ajukan persiapkan rencana milestone ini untuk mengisi logbook.</p>
+                                
+                                <form action="{{ route('siswa.milestone.complete', $milestone->id) }}" method="POST">
+                                    @csrf @method('PATCH')
+                                    <button type="submit" class="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg">
+                                        Tunggu Verifikasi Guru
+                                    </button>
+                                </form>
+                            @else
+                                {{-- TAMPILAN: SUDAH MENGAJUKAN, TAPI BELUM DI-ACC GURU --}}
+                                <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
+                                    <i class="fas fa-hourglass-half text-amber-400 animate-pulse"></i>
+                                </div>
+                                <h4 class="text-[11px] font-black text-slate-900 uppercase tracking-widest mb-2">Menunggu Verifikasi</h4>
+                                
+                                <div class="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-600 rounded-full border border-amber-100">
+                                    <span class="relative flex h-2 w-2">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                    </span>
+                                    <span class="text-[9px] font-black uppercase tracking-widest">Rencana Sedang Ditinjau Guru</span>
+                                </div>
+                                <p class="text-[9px] text-slate-400 mt-3 italic">*Logbook dan tombol selesai akan muncul setelah disetujui.</p>
+                            @endif
+                        </div>
+
+                    {{-- CASE 2: SEMUA SUDAH DI-ACC (Akses Terbuka) --}}
+                    @else
+                        <div class="flex flex-col md:flex-row gap-3 w-full">
+                            
+                            {{-- TOMBOL LOGBOOK --}}
+                            {{-- Jika sudah diklik "Selesaikan Target" (is_completed true lagi), maka ganti jadi mode Lihat --}}
+                            {{-- Kita butuh logika tambahan di controller untuk membedakan is_completed saat AJUKAN RENCANA dan AJUKAN HASIL --}}
+                            <a href="{{ route('siswa.logbook.index', $project->id) }}" 
+                            class="flex-1 py-4 bg-amber-50 text-amber-600 border border-amber-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-100 transition-all text-center shadow-sm">
+                                <i class="fas fa-book mr-2"></i> Isi Logbook
+                            </a>
+
+                            {{-- TOMBOL SELESAIKAN TARGET --}}
+                            <form action="{{ route('siswa.milestone.complete', $milestone->id) }}" method="POST" class="flex-1">
+                                @csrf @method('PATCH')
+                                <button type="submit" 
+                                        onclick="return confirm('Selesaikan milestone ini? Seluruh logbook untuk target ini akan dikunci.')"
+                                        class="w-full py-4 bg-emerald-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100">
+                                    <i class="fas fa-flag-checkered mr-2"></i> Selesaikan Target
+                                </button>
+                            </form>
+                        </div>
+                    @endif
+
+                    {{-- FOOTER STATUS: PROYEK FINISH --}}
+                    @if($project->is_finished)
+                        <div class="flex items-center justify-center gap-2 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase border border-slate-800 shadow-xl mt-2">
+                            <i class="fas fa-trophy text-lg text-amber-400"></i>
+                            Proyek Selesai & Diarsipkan
                         </div>
                     @endif
                 </div>

@@ -3,6 +3,12 @@
 @section('title', 'Project Timeline - ' . $project->judul)
 
 @section('content')
+{{-- Ambil status milestone aktif untuk pengecekan --}}
+@php
+    $activeMilestone = $project->milestones->where('status_review', 'disetujui')->where('is_completed', false)->first();
+    $isLocked = $project->is_finished || ($activeMilestone == null && $project->milestones->where('is_completed', true)->count() > 0);
+@endphp
+
 <div class="max-w-5xl mx-auto px-4 py-10" x-data="{ showModal: false }">
     
     {{-- Breadcrumb & Header --}}
@@ -15,28 +21,54 @@
             <p class="text-slate-500 font-medium italic">Riwayat aktivitas proyek: {{ $project->judul }}</p>
         </div>
 
-        <button @click="showModal = true" class="px-8 py-4 bg-slate-900 text-white rounded-[2rem] text-[11px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-2xl shadow-slate-200">
-            <i class="fas fa-plus mr-2"></i> Tambah Logbook
-        </button>
+        {{-- Logika Tombol Tambah: Disable jika Terkunci --}}
+        @php
+            $isLocked = now()->greaterThan($project->tanggal_selesai);
+        @endphp
+
+        @if($isLocked)
+            <div class="flex flex-col items-end gap-2">
+                <div class="px-8 py-4 bg-slate-50 text-rose-500 rounded-[2rem] text-[11px] font-black uppercase tracking-widest border-2 border-dashed border-rose-100 flex items-center gap-3 shadow-sm">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                    </span>
+                    <i class="fas fa-lock"></i> Logbook Locked
+                </div>
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter mr-4">
+                    Masa pengerjaan telah berakhir
+                </span>
+            </div>
+        @else
+            <button @click="showModal = true" class="px-8 py-4 bg-slate-900 text-white rounded-[2rem] text-[11px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-2xl shadow-slate-200 group">
+                <i class="fas fa-plus mr-2 group-hover:rotate-90 transition-transform duration-300"></i> Tambah Logbook
+            </button>
+        @endif
     </div>
+
+    {{-- Alert Status --}}
+    @if($isLocked && !$project->is_finished)
+        <div class="mb-8 p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-center gap-3">
+            <i class="fas fa-info-circle text-amber-500"></i>
+            <p class="text-[10px] font-bold text-amber-700 uppercase tracking-tight">
+                Anda tidak bisa menambah logbook karena milestone saat ini sedang ditinjau atau telah selesai.
+            </p>
+        </div>
+    @endif
 
     {{-- Logbook Timeline --}}
     <div class="relative">
-        {{-- Garis Tengah Timeline --}}
         <div class="absolute left-0 md:left-1/2 top-0 bottom-0 w-1 bg-slate-100 -translate-x-1/2 hidden md:block"></div>
 
         <div class="space-y-12">
-            @forelse($project->logbooks as $index => $log)
+            @forelse($project->logbooks->sortByDesc('tanggal_kerjakan') as $index => $log)
                 <div class="relative flex flex-col md:flex-row items-center gap-8 {{ $index % 2 == 0 ? 'md:flex-row-reverse' : '' }}">
                     
-                    {{-- Dot Timeline --}}
                     <div class="absolute left-0 md:left-1/2 w-4 h-4 bg-white border-4 border-blue-600 rounded-full -translate-x-1/2 z-10 hidden md:block"></div>
 
-                    {{-- Card Konten --}}
                     <div class="w-full md:w-[45%]">
                         <div class="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
                             
-                            {{-- Header Card --}}
                             <div class="flex items-center justify-between mb-4">
                                 <span class="text-[9px] font-black px-3 py-1 bg-blue-50 text-blue-600 rounded-full uppercase tracking-widest">
                                     {{ \Carbon\Carbon::parse($log->tanggal_kerjakan)->format('d M Y') }}
@@ -44,7 +76,6 @@
                                 <span class="text-[10px] font-bold text-slate-400">{{ $log->created_at->format('H:i') }}</span>
                             </div>
 
-                            {{-- Badge Milestone --}}
                             <div class="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full mb-3">
                                 <i class="fas fa-bullseye text-[10px] text-slate-400"></i>
                                 <span class="text-[9px] font-black text-slate-500 uppercase tracking-tighter">
@@ -52,15 +83,20 @@
                                 </span>
                             </div>
                             
-                            {{-- Judul & Deskripsi --}}
                             <h3 class="text-xl font-black text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">{{ $log->judul }}</h3>
                             <p class="text-sm text-slate-500 leading-relaxed mb-6 italic">"{{ $log->deskripsi }}"</p>
+
+                            {{-- Tampilan Feedback Guru lebih menonjol --}}
                             @if($log->feedback_guru)
-                                <div class="mt-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-2xl">
-                                    <p class="text-[9px] font-black text-blue-600 uppercase tracking-widest">Pesan dari Guru:</p>
+                                <div class="mt-4 p-4 bg-amber-50 border-l-4 border-amber-400 rounded-r-2xl">
+                                    <p class="text-[9px] font-black text-amber-600 uppercase tracking-widest flex items-center gap-2">
+                                        <i class="fas fa-comment-dots"></i> Feedback Guru:
+                                    </p>
                                     <p class="text-xs text-slate-700 mt-1 font-semibold">{{ $log->feedback_guru }}</p>
                                 </div>
                             @endif
+
+                            {{-- Lampiran --}}
                             @if($log->lampiran)
                                 <div class="mt-4 pt-4 border-t border-slate-50">
                                     @php $ext = pathinfo($log->lampiran, PATHINFO_EXTENSION); @endphp
@@ -79,7 +115,6 @@
                                 </div>
                             @endif
 
-                            {{-- Footer Kontributor --}}
                             <div class="flex items-center gap-3 pt-6 mt-4 border-t border-slate-50">
                                 <img src="https://ui-avatars.com/api/?name={{ urlencode($log->user->name) }}&background=random" class="w-8 h-8 rounded-xl shadow-sm">
                                 <div>
@@ -90,7 +125,6 @@
                         </div>
                     </div>
 
-                    {{-- Spacer --}}
                     <div class="hidden md:block md:w-[45%]"></div>
                 </div>
             @empty
@@ -105,22 +139,8 @@
     </div>
 
     {{-- Modal Pop Up --}}
-    <div 
-        x-show="showModal" 
-        x-cloak
-        class="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm"
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0">
-        
-        <div @click.away="showModal = false" 
-             class="bg-white w-full max-w-2xl rounded-[3.5rem] p-8 md:p-12 shadow-2xl relative overflow-y-auto max-h-[90vh]"
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0 scale-95 translate-y-8"
-             x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+    <div x-show="showModal" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm">
+        <div @click.away="showModal = false" class="bg-white w-full max-w-2xl rounded-[3.5rem] p-8 md:p-12 shadow-2xl relative overflow-y-auto max-h-[90vh]">
             
             <button @click="showModal = false" class="absolute top-8 right-8 text-slate-300 hover:text-rose-500 transition-colors z-10">
                 <i class="fas fa-times text-xl"></i>
@@ -136,44 +156,39 @@
             <form action="{{ route('siswa.logbook.store', $project->id) }}" method="POST" enctype="multipart/form-data" class="space-y-6 relative">
                 @csrf
                 
-                {{-- Milestone Selection --}}
+                {{-- Milestone Selection: Hanya tampilkan yang disetujui & belum diklaim selesai --}}
                 <div class="space-y-2">
                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Milestone Terkait</label>
                     <select name="milestone_id" required class="w-full px-8 py-5 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-blue-600 transition-all outline-none appearance-none">
-                        <option value="" disabled selected>-- Pilih Milestone yang sedang dikerjakan --</option>
-                        @foreach($project->milestones->where('status_review', 'disetujui') as $ms)
+                        <option value="" disabled selected>-- Pilih Milestone Aktif --</option>
+                        @foreach($project->milestones->where('status_review', 'disetujui')->where('is_completed', false) as $ms)
                             <option value="{{ $ms->id }}">{{ $ms->nama_milestone }}</option>
                         @endforeach
                     </select>
-                    @if($project->milestones->where('status_review', 'disetujui')->count() == 0)
-                        <p class="mt-2 ml-4 text-[9px] text-rose-500 font-bold uppercase">
-                            <i class="fas fa-exclamation-triangle"></i> Guru belum menyetujui milestone apa pun.
-                        </p>
-                    @endif
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-2">
                         <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Apa yang dikerjakan?</label>
-                        <input type="text" name="judul" required placeholder="Slicing UI Dashboard" 
+                        <input type="text" name="judul" required placeholder="Contoh: Menyelesaikan desain database" 
                                class="w-full px-8 py-5 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-blue-600 transition-all outline-none">
                     </div>
 
                     <div class="space-y-2">
                         <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Tanggal Pengerjaan</label>
-                        <input type="date" name="tanggal_kerjakan" required value="{{ date('Y-m-d') }}"
+                        <input type="date" name="tanggal_kerjakan" required value="{{ date('Y-m-d') }}" max="{{ date('Y-m-d') }}"
                                class="w-full px-8 py-5 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-blue-600 transition-all outline-none">
                     </div>
                 </div>
 
                 <div class="space-y-2">
                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Detail Aktivitas</label>
-                    <textarea name="deskripsi" rows="4" required placeholder="Jelaskan proses pengerjaan..." 
+                    <textarea name="deskripsi" rows="4" required placeholder="Jelaskan secara detail apa yang Anda lakukan..." 
                               class="w-full px-8 py-5 bg-slate-50 border-none focus:ring-2 focus:ring-blue-600 rounded-[2rem] text-sm font-bold transition-all outline-none resize-none"></textarea>
                 </div>
 
                 <div class="space-y-2">
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Lampiran (Foto/PDF)</label>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Lampiran Bukti (Foto/PDF)</label>
                     <div class="relative group">
                         <input type="file" name="lampiran" accept=".jpg,.jpeg,.png,.pdf"
                             class="w-full px-8 py-4 bg-slate-50 border-2 border-dashed border-slate-200 group-hover:border-blue-400 rounded-2xl text-xs font-bold transition-all outline-none">
@@ -187,16 +202,11 @@
                     </button>
                     <button type="submit" 
                             class="flex-grow py-5 bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-200">
-                        Kirim Laporan <i class="fas fa-paper-plane ml-2"></i>
+                        Kirim Laporan Logbook <i class="fas fa-paper-plane ml-2"></i>
                     </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-
-<style>
-    [x-cloak] { display: none !important; }
-    body { background-color: #fcfdfe; }
-</style>
 @endsection

@@ -11,18 +11,16 @@ class MilestoneController extends Controller
 {
     public function index(Request $request)
     {
-        // 1. Ambil ID guru yang sedang login
+
         $guruId = Auth::id();
 
-        // 2. Query Milestone yang statusnya masih 'pending'
-        // Baik itu pending rencana awal maupun pending setelah diklik 'selesai'
         $query = Milestone::with('proposal')
             ->whereHas('proposal', function($q) use ($guruId) {
-                $q->where('guru_id', $guruId); // Pastikan hanya milik bimbingan guru ini
+                $q->where('guru_id', $guruId); 
             })
             ->where('status_review', 'pending'); 
 
-        // 3. Filter jika datang dari tombol 'Lihat' di Monitoring
+
         if ($request->has('project_id')) {
             $query->where('proposal_id', $request->project_id);
         }
@@ -41,12 +39,15 @@ class MilestoneController extends Controller
 
         $milestone = Milestone::findOrFail($id);
         
-        $newStatus = ($request->status_review === 'disetujui');
+        $isCompleted = $milestone->is_completed;
+        if ($request->status_review === 'revisi') {
+            $isCompleted = false;
+        }
 
         $milestone->update([
             'status_review' => $request->status_review,
             'feedback_guru' => $request->feedback_guru,
-            'is_completed'  => $newStatus 
+            'is_completed'  => $isCompleted 
         ]);
 
         return redirect()->route('guru.milestone.index')->with('success', 'Review milestone berhasil diperbarui!');

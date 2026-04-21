@@ -38,24 +38,25 @@ class MilestoneController extends Controller
     {
         $userId = Auth::id();
 
-        // 1. Pastikan Proyek (Proposal) ada dan milik user yang login
         $project = Proposal::where('id', $id)
             ->where('pengaju_id', $userId)
             ->firstOrFail();
 
-        // 2. Validasi Input Dasar
+        if (now()->greaterThan($project->tanggal_selesai)) {
+            return redirect()->back()->with('error', 'Waktu pengerjaan proyek telah habis. Anda hanya dapat meninjau data (Review Only).');
+        }
         $request->validate([
             'nama_milestone' => 'required|string|max:255',
             'deadline' => 'required|date', 
         ]);
 
-        // 3. Simpan Data dengan menyertakan 'is_completed'
+
         Milestone::create([
             'proposal_id'    => $project->id,
             'nama_milestone' => $request->nama_milestone,
             'deadline'       => $request->deadline,
             'status_review'  => 'pending',
-            'is_completed'   => false, // Menandakan target baru dimulai (belum selesai)
+            'is_completed'   => false, 
         ]);
 
         return redirect()->back()->with('success', 'Target baru berhasil ditambahkan!');
@@ -75,7 +76,6 @@ class MilestoneController extends Controller
             return redirect()->back()->with('error', 'Milestone ini belum disetujui oleh Guru/Mentor.');
         }
 
-        // Update status pengerjaan
         $milestone->update([
             'is_completed' => true,
             'status_review' => 'pending' 

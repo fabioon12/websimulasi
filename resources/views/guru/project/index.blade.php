@@ -123,43 +123,60 @@
                 </div>
 
                 {{-- Project Content --}}
-                <div class="px-8 py-8 space-y-4 flex-grow flex flex-col">
+                <div class="px-8 py-8 space-y-6 flex-grow flex flex-col bg-white rounded-[3rem] border border-slate-100 shadow-sm group">
+                    {{-- Header Card --}}
                     <div class="flex justify-between items-center">
                         <div class="px-4 py-1.5 bg-slate-50 rounded-xl text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-100">
                             {{ $proyek->kelas }}
                         </div>
                         <div class="flex items-center gap-2 text-[10px] font-black text-rose-500 uppercase tracking-widest">
-                            <i class="far fa-clock"></i> {{ \Carbon\Carbon::parse($proyek->deadline)->format('d M Y') }}
+                            <i class="far fa-clock"></i> 
+                            {{ \Carbon\Carbon::parse($proyek->deadline)->format('d M Y') }}
                         </div>
                     </div>
 
-                    <h4 class="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none group-hover:text-emerald-600 transition">
-                        {{ $proyek->nama_proyek }}
-                    </h4>
+                    {{-- Body Card --}}
+                    <div class="space-y-3">
+                        <h4 class="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-[0.9] group-hover:text-emerald-600 transition-colors duration-300">
+                            {{ $proyek->nama_proyek }}
+                        </h4>
 
-                    <p class="text-sm text-slate-500 font-medium line-clamp-2 leading-relaxed">
-                        {{ $proyek->deskripsi ?? 'Ready for deployment. Instructor has not provided detailed specs yet.' }}
-                    </p>
+                        <p class="text-sm text-slate-500 font-medium line-clamp-2 leading-relaxed">
+                            {{ $proyek->deskripsi ?? 'Ready for deployment. Instructor has not provided detailed specs yet.' }}
+                        </p>
+                    </div>
 
-                    <div class="pt-6 mt-auto border-t border-slate-50 flex items-center justify-between">
-                        <div class="flex -space-x-3">
-                            @for ($i = 0; $i < 3; $i++)
-                                <div class="w-8 h-8 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center">
-                                    <i class="fas fa-user-circle text-slate-300 text-sm"></i>
+                    {{-- Footer Section --}}
+                    <div class="pt-6 mt-auto border-t border-slate-50 space-y-6">
+                        {{-- Avatar Group --}}
+                        <div class="flex items-center justify-between">
+                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Team Assigned</span>
+                            <div class="flex -space-x-3">
+                                @for ($i = 0; $i < 3; $i++)
+                                    <div class="w-8 h-8 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center shadow-sm">
+                                        <i class="fas fa-user-circle text-slate-300 text-sm"></i>
+                                    </div>
+                                @endfor
+                                <div class="w-8 h-8 rounded-full border-2 border-white bg-emerald-600 flex items-center justify-center text-[10px] font-black text-white shadow-sm">
+                                    +{{ $proyek->roles->count() }}
                                 </div>
-                            @endfor
-                            <div class="w-8 h-8 rounded-full border-2 border-white bg-emerald-600 flex items-center justify-center text-[10px] font-black text-white">
-                                +{{ $proyek->roles->count() }}
                             </div>
                         </div>
 
-                        <div class="flex gap-3">
+                        {{-- Action Buttons --}}
+                        <div class="flex items-center gap-3">
+                            {{-- Button 1: Edit Tugas (Icon Only - Outline) --}}
                             <a href="{{ route('guru.proyek.roadmap', $proyek->id) }}" 
-                               class="px-6 py-4 bg-slate-900 text-white rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600 transition-all flex items-center gap-3">
-                                <i class="fas fa-project-diagram"></i> Edit Tugas
+                            class="w-14 h-14 inline-flex items-center justify-center bg-transparent border-2 border-slate-900 text-slate-900 rounded-[1.5rem] hover:bg-slate-900 hover:text-white hover:-translate-y-1 transition-all duration-300 group/btn"
+                            title="Edit Tugas">
+                                <i class="fas fa-edit text-lg group-hover/btn:rotate-12 transition-transform"></i>
                             </a>
-                            <a href="{{ route('guru.review.index') }}" class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-[1.5rem] flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all">
-                                <i class="fas fa-chart-bar text-lg"></i>
+
+                            {{-- Button 2: Pantau Progress (Full Width - Solid Emerald) --}}
+                            <a href="{{ route('guru.review.index') }}" 
+                            class="flex-1 inline-flex items-center justify-center gap-3 px-6 py-4 bg-emerald-500 text-white rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600 hover:-translate-y-1 transition-all duration-300 shadow-lg shadow-emerald-100 group/btn">
+                                <i class="fas fa-chart-line text-[12px] group-hover/btn:scale-110 transition-transform"></i>
+                                <span>Pantau Progress</span>
                             </a>
                         </div>
                     </div>
@@ -171,7 +188,7 @@
             <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce">
                 <i class="fas fa-ghost text-slate-200 text-4xl"></i>
             </div>
-            <h3 class="text-3xl font-black text-slate-900 uppercase italic">Awan Kosong</h3>
+            <h3 class="text-3xl font-black text-slate-900 uppercase italic">Proyek Kosong</h3>
             <p class="text-xs text-slate-400 mt-4 font-bold uppercase tracking-[0.3em]">Belum ada proyek yang diluncurkan</p>
         </div>
         @endforelse

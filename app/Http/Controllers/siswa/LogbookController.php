@@ -47,7 +47,10 @@ class LogbookController extends Controller
 
         
         $project = Proposal::findOrFail($id);
-
+        
+        if (now()->greaterThan($project->tanggal_selesai)) {
+            return redirect()->back()->with('error', 'Gagal! Batas waktu pengerjaan proyek ini sudah berakhir. Anda tidak dapat menambah logbook baru.');
+        }
         $data = [
             'proposal_id' => $project->id,
             'milestone_id' => $request->milestone_id,

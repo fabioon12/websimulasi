@@ -118,20 +118,37 @@
                         <p class="text-sm text-slate-500 line-clamp-2 mb-6 font-medium leading-relaxed">
                             {{ $proyek->deskripsi }}
                         </p>
-                        
-                        {{-- Progress bar & Timeline --}}
-                        <div class="space-y-3 mb-8">
-                            <div class="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                <span>Timeline Progres</span>
-                                <span class="{{ $diffInDays <= 7 ? 'text-rose-500' : 'text-emerald-500' }}">Due {{ $end->format('d M') }}</span>
+                        {{-- Progress Milestone & Timeline --}}
+                        <div class="space-y-4 mb-8">
+                            {{-- Perhitungan Progres --}}
+                            @php
+                                $totalMilestones = $proyek->milestones->count();
+                                $completedMilestones = $proyek->milestones->where('status_review', 'disetujui')->where('is_completed', true)->count();
+                                $milestonePercentage = $totalMilestones > 0 ? round(($completedMilestones / $totalMilestones) * 100) : 0;
+                            @endphp
+
+                            {{-- Label Progres --}}
+                            <div class="flex justify-between items-end">
+                                <div class="space-y-1">
+                                    <p class="text-[9px] font-black uppercase tracking-widest text-slate-400">Milestone Progress</p>
+                                    <p class="text-xs font-black text-slate-900">{{ $completedMilestones }} <span class="text-slate-400">/ {{ $totalMilestones }} Done</span></p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-lg font-black text-blue-600">{{ $milestonePercentage }}%</span>
+                                </div>
                             </div>
-                            <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                @php
-                                    $totalDays = $start->diffInDays($end) ?: 1;
-                                    $passedDays = $start->diffInDays(now());
-                                    $percentage = min(100, max(0, ($passedDays / $totalDays) * 100));
-                                @endphp
-                                <div class="h-full {{ $diffInDays <= 7 ? 'bg-rose-500' : 'bg-blue-600' }} rounded-full" style="width: {{ $percentage }}%"></div>
+
+                            {{-- Progress Bar Visual --}}
+                            <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/50">
+                                <div class="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(37,99,235,0.3)]" 
+                                    style="width: {{ $milestonePercentage }}%">
+                                </div>
+                            </div>
+
+                            {{-- Timeline Info (Kecil) --}}
+                            <div class="flex items-center gap-2 text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
+                                <i class="far fa-clock"></i>
+                                <span>Sisa Waktu: {{ $diffInDays < 0 ? 'Waktu Habis' : ceil($diffInDays) . ' Hari Lagi' }}</span>
                             </div>
                         </div>
 

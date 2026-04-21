@@ -229,14 +229,23 @@
 
                 {{-- Content: Video --}}
                 @if($subMateriAktif->video_url)
-                <div x-show="activeTab === 'video'" x-cloak x-transition class="bg-white p-6 rounded-[3.5rem] border border-slate-100 shadow-sm">
-                    <div class="aspect-video rounded-[2.5rem] overflow-hidden bg-slate-900 border-8 border-slate-50">
-                        @php
-                            $videoId = Str::contains($subMateriAktif->video_url, 'watch?v=') ? Str::after($subMateriAktif->video_url, 'watch?v=') : Str::afterLast($subMateriAktif->video_url, '/');
-                        @endphp
-                        <iframe class="w-full h-full" src="https://www.youtube.com/embed/{{ $videoId }}" frameborder="0" allowfullscreen></iframe>
+                    @php
+                        // Regex sederhana untuk mengambil 11 karakter ID YouTube
+                        preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i', $subMateriAktif->video_url, $matches);
+                        $videoId = $matches[1] ?? $subMateriAktif->video_url;
+                    @endphp
+
+                    <div x-show="activeTab === 'video'" x-cloak x-transition class="bg-white p-6 rounded-[3.5rem] border border-slate-100 shadow-sm">
+                        <div class="aspect-video rounded-[2.5rem] overflow-hidden bg-slate-900 border-8 border-slate-50">
+                            <iframe 
+                                class="w-full h-full" 
+                                src="https://www.youtube.com/embed/{{ trim($videoId) }}" 
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen>
+                            </iframe>
+                        </div>
                     </div>
-                </div>
                 @endif
 
                 {{-- Content: Coding --}}
@@ -307,12 +316,62 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
 <style>
-    [x-cloak] { display: none !important; }
-    .CodeMirror { height: 100%; font-family: 'Fira Code', monospace; font-size: 14px; padding: 20px; }
-    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-    .prose { text-align: justify; word-break: break-word; }
-    .prose img { max-width: 100%; border-radius: 1rem; }
+[x-cloak] { display: none !important; }
+    
+    /* Font & Base Text */
+    .prose { 
+        font-family: 'Inter', sans-serif; 
+        color: #334155; /* slate-700 */
+        line-height: 1.8;
+        text-align: justify;
+    }
+
+    /* Styling Heading 1 (Hasil dari Editor Guru) */
+    .prose h1 {
+        font-size: 2.25rem;
+        font-weight: 800;
+        color: #1e293b;
+        margin-top: 2rem;
+        margin-bottom: 1.5rem;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+    }
+
+    /* Grid Gambar Otomatis (Sama dengan Grid 3 Kolom Guru) */
+    .prose figure.attachment {
+        display: inline-block !important;
+        vertical-align: top;
+        margin: 0 5px 15px 0 !important;
+        width: 31% !important; 
+    }
+
+    @media (max-width: 768px) {
+        .prose figure.attachment { width: 48% !important; } /* 2 Kolom di HP */
+    }
+
+    .prose figure.attachment img {
+        width: 100%;
+        border-radius: 1.25rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .prose figure.attachment img:hover {
+        transform: scale(1.02);
+    }
+
+    /* List Styling */
+    .prose ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1.5rem; }
+    .prose ol { list-style-type: decimal; margin-left: 1.5rem; margin-bottom: 1.5rem; }
+    .prose li { margin-bottom: 0.5rem; }
+
+    /* CodeMirror Theme (Siswa Mode - Read Only) */
+    .CodeMirror { 
+        height: auto !important; 
+        min-height: 300px;
+        border-radius: 1.5rem; 
+        font-family: 'Fira Code', monospace;
+    }
 </style>
 
 {{-- Scripts --}}
@@ -324,45 +383,83 @@
     // KUIS LOGIC
     function checkQuiz() {
         const form = document.getElementById('quizForm');
-            const items = document.querySelectorAll('.quiz-item');
-            let correct = 0;
-            let total = items.length;
+        const items = document.querySelectorAll('.quiz-item');
+        let correctCount = 0;
+        let total = items.length;
 
-            items.forEach((item, index) => {
-                const selected = form.querySelector(`input[name="soal_${index}"]:checked`);
-                // Ambil jawaban dan ubah ke huruf besar agar sama dengan value input
-                const correctAnswer = item.getAttribute('data-answer').toUpperCase();
-                
-                const labels = item.querySelectorAll('label > div');
-
-                if (selected) {
-                    if (selected.value === correctAnswer) {
-                        correct++;
-                        selected.nextElementSibling.classList.add('border-emerald-500', 'bg-emerald-50');
-                    } else {
-                        selected.nextElementSibling.classList.add('border-rose-500', 'bg-rose-50');
-                    }
-                }
+        items.forEach((item, index) => {
+            const selected = form.querySelector(`input[name="soal_${index}"]:checked`);
+            const correctAnswer = item.getAttribute('data-answer').toUpperCase();
+            
+            // 1. Ambil semua div opsi di dalam soal ini untuk reset warna
+            const allOptionDivs = item.querySelectorAll('label > div');
+            allOptionDivs.forEach(div => {
+                div.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-rose-500', 'bg-rose-50', 'border-dashed');
+                div.classList.add('border-slate-100'); // Kembalikan ke border default
             });
 
-        const score = Math.round((correct / total) * 100);
+            // 2. Logika Pengecekan
+            if (selected) {
+                const userValue = selected.value.toUpperCase();
+                const targetDiv = selected.nextElementSibling; // div pembungkus opsi
+
+                if (userValue === correctAnswer) {
+                    // JAWABAN BENAR
+                    correctCount++;
+                    targetDiv.classList.remove('border-slate-100');
+                    targetDiv.classList.add('border-emerald-500', 'bg-emerald-50');
+                } else {
+                    // JAWABAN SALAH
+                    targetDiv.classList.remove('border-slate-100');
+                    targetDiv.classList.add('border-rose-500', 'bg-rose-50');
+
+                    // TAMPILKAN KUNCI JAWABAN (Cari input yang value-nya sama dengan kunci)
+                    const correctInput = item.querySelector(`input[value="${correctAnswer}"]`);
+                    if (correctInput) {
+                        correctInput.nextElementSibling.classList.remove('border-slate-100');
+                        correctInput.nextElementSibling.classList.add('border-emerald-500', 'bg-emerald-50', 'border-dashed');
+                    }
+                }
+            } else {
+                // JIKA BELUM DIJAWAB: Tetap tunjukkan mana yang benar dengan garis putus-putus
+                const correctInput = item.querySelector(`input[value="${correctAnswer}"]`);
+                if (correctInput) {
+                    correctInput.nextElementSibling.classList.add('border-emerald-500', 'border-dashed');
+                }
+            }
+        });
+
+        // 3. Kalkulasi Skor & Update UI
+        const score = Math.round((correctCount / total) * 100);
         document.getElementById('displayScore').innerText = score;
         document.getElementById('quizResult').classList.remove('hidden');
         
         const btnComplete = document.getElementById('btnComplete');
         const warning = document.getElementById('quizWarning');
+        const resultMessage = document.getElementById('resultMessage');
 
-        if (score >= 70) { // Syarat lulus kuis 70
-            document.getElementById('resultMessage').innerText = "Luar biasa! Anda memahami materi ini dengan baik.";
+        if (score >= 70) {
+            resultMessage.innerText = "Luar biasa! Anda memahami materi ini dengan baik.";
+            resultMessage.classList.replace('text-rose-500', 'text-emerald-600'); // Opsional: ganti warna teks
+            
             if (btnComplete) {
                 btnComplete.disabled = false;
-                btnComplete.classList.remove('bg-slate-300', 'cursor-not-allowed');
-                btnComplete.classList.add('bg-blue-600', 'hover:bg-blue-700');
-                warning.classList.add('hidden');
+                btnComplete.classList.remove('bg-slate-300', 'cursor-not-allowed', 'opacity-50');
+                btnComplete.classList.add('bg-blue-600', 'hover:bg-blue-700', 'shadow-lg');
             }
+            if (warning) warning.classList.add('hidden');
         } else {
-            document.getElementById('resultMessage').innerText = "Skor minimal 70 diperlukan untuk lanjut. Ayo coba lagi!";
+            resultMessage.innerText = "Skor minimal 70 diperlukan untuk lanjut. Ayo pelajari lagi bagian yang salah!";
+            resultMessage.classList.add('text-rose-500');
+            
+            if (btnComplete) {
+                btnComplete.disabled = true;
+                btnComplete.classList.add('bg-slate-300', 'cursor-not-allowed', 'opacity-50');
+            }
         }
+
+        // Scroll otomatis ke hasil agar siswa melihat skornya
+        document.getElementById('quizResult').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     // EDITOR LOGIC

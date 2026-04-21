@@ -17,12 +17,33 @@ class WorkspaceController extends Controller
             ->latest()
             ->paginate(10, ['*'], 'pending_page');
 
+
         $activeProjects = Proposal::where('status', 'disetujui')
+            ->with(['milestones', 'logbooks']) 
             ->latest()
             ->paginate(6, ['*'], 'active_page');
 
-        $totalStudents = User::where('role', 'siswa')->count(); // Opsional untuk statistik
 
-        return view('guru.proposal.dashboard', compact('pendingProposals', 'activeProjects', 'totalStudents'));
+        $activeProjectIds = Proposal::where('status', 'disetujui')->pluck('id');
+
+        $totalMilestones = \App\Models\Milestone::whereIn('proposal_id', $activeProjectIds)->count();
+
+        $completedMilestones = \App\Models\Milestone::whereIn('proposal_id', $activeProjectIds)
+            ->where('is_completed', true)
+            ->where('status_review', 'disetujui')
+            ->count();
+
+        $averageProgress = $totalMilestones > 0 
+            ? round(($completedMilestones / $totalMilestones) * 100) 
+            : 0;
+
+        $totalStudents = User::where('role', 'siswa')->count();
+
+        return view('guru.proposal.dashboard', compact(
+            'pendingProposals', 
+            'activeProjects', 
+            'totalStudents', 
+            'averageProgress' 
+        ));
     }
 }

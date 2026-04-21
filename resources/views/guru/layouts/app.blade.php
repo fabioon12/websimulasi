@@ -75,7 +75,7 @@
 
                 <a href="{{ route('guru.proyek.dashboard') }}" class="flex items-center gap-4 px-4 py-3 rounded-xl font-bold transition {{ Request::is('guru/proyek/*') ? 'sidebar-active' : 'text-slate-500 hover:bg-slate-50' }}">
                     <i class="fas fa-project-diagram w-5 shrink-0 text-center"></i>
-                    <span x-show="!sidebarCollapsed" x-transition.opacity>Tambah Proyek</span>
+                    <span x-show="!sidebarCollapsed" x-transition.opacity>Manajemen Proyek</span>
                 </a>
 
                 <p x-show="!sidebarCollapsed" class="px-4 mt-6 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-2">Manajemen Proyek</p>

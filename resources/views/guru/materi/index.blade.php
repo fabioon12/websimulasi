@@ -103,8 +103,13 @@
                                     @endif
                                 </div>
                                 <div>
-                                    <p class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition">{{ $materi->judul }}</p>
-                                    <p class="text-[9px] font-bold text-slate-400 uppercase mt-0.5">ID: #{{ $materi->id }}</p>
+                                    <p class="text-base font-extrabold text-slate-900 group-hover:text-blue-600 transition mb-1">
+                                        {{ $materi->judul }}
+                                    </p>
+
+                                    <p class="text-xs font-medium text-slate-500 group-hover:text-slate-700 transition line-clamp-2">
+                                        {{ $materi->deskripsi }}
+                                    </p>
                                 </div>
                             </div>
                         </td>

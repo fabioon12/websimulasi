@@ -22,6 +22,22 @@
                 </p>
             </div>
         </div>
+
+         <div class="flex justify-center mb-8">
+            <div class="flex bg-slate-100 p-1.5 rounded-[2rem] border border-slate-200 shadow-inner">
+                <button @click="tipeMateri = 'materi'; tab = 'info'" 
+                    :class="tipeMateri === 'materi' ? 'bg-white shadow-md text-blue-600' : 'text-slate-400'"
+                    class="px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2">
+                    <i class="fas fa-book-open"></i> Materi Lengkap
+                </button>
+                <button @click="tipeMateri = 'kuis'; tab = 'kuis'" 
+                    :class="tipeMateri === 'kuis' ? 'bg-amber-500 shadow-md text-white' : 'text-slate-400'"
+                    class="px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2">
+                    <i class="fas fa-tasks"></i> Hanya Kuis
+                </button>
+            </div>
+        </div>
+
         <button @click="updateData()" class="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition shadow-xl active:scale-95">
             <i class="fas fa-save mr-2"></i> Simpan Perubahan
         </button>
@@ -232,6 +248,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
 
 <script>
+    document.addEventListener("trix-before-initialize", () => {
+        Trix.config.blockAttributes.heading1 = {
+            tagName: "h1",
+            terminal: true,
+            breakOnReturn: true,
+            group: false
+        };
+    });
     function editMateriHandler() {
         return {
             tab: '{{ $subMateri->tipe == 'kuis' ? 'kuis' : 'info' }}',
@@ -307,55 +331,53 @@
                 };
             },
             async updateData() {
-                // Tampilkan loading sederhana jika perlu
-                const btnSimpan = event.target;
+                const btnSimpan = event.currentTarget; // Gunakan currentTarget agar lebih stabil
                 btnSimpan.disabled = true;
                 btnSimpan.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Mengirim...';
 
-                const formData = new FormData();
-                
-                // Laravel mengidentifikasi ini sebagai PUT melalui spoofing method
-                formData.append('_method', 'PUT');
-                formData.append('judul', this.form.judul);
-                formData.append('kategori', this.form.kategori);
-                formData.append('urutan', this.form.urutan);
-                formData.append('tipe', this.tipeMateri);
-
-                if (this.tipeMateri === 'kuis') {
-                    formData.append('kuis_data', JSON.stringify(this.form.kuis));
-                } else {
-                    // Ambil value terbaru dari Trix Editor
-                    const bacaanValue = document.getElementById('bacaan_trix').value;
-                    const instruksiValue = document.getElementById('instruksi_trix').value;
-                    
-                    formData.append('bacaan', bacaanValue);
-                    formData.append('instruksi_coding', instruksiValue);
-                    formData.append('starter_code', window.editorGuru.getValue());
-                    formData.append('video_url', this.form.video);
-                    
-                    if (this.$refs.fileInput.files[0]) {
-                        formData.append('pdf_file', this.$refs.fileInput.files[0]);
-                    }
-                }
-
                 try {
+                    const formData = new FormData();
+                    formData.append('_method', 'PUT');
+                    formData.append('judul', this.form.judul);
+                    formData.append('kategori', this.form.kategori);
+                    formData.append('urutan', this.form.urutan);
+                    formData.append('tipe', this.tipeMateri);
+
+                    if (this.tipeMateri === 'kuis') {
+                        formData.append('kuis_data', JSON.stringify(this.form.kuis));
+                    } else {
+                        // PROTEKSI: Cek apakah elemen ada sebelum ambil value
+                        const elBacaan = document.getElementById('bacaan_trix');
+                        const elInstruksi = document.getElementById('instruksi_trix');
+                        
+                        formData.append('bacaan', elBacaan ? elBacaan.value : '');
+                        formData.append('instruksi_coding', elInstruksi ? elInstruksi.value : '');
+                        
+                        // Cek apakah editorGuru sudah siap
+                        if (window.editorGuru) {
+                            formData.append('starter_code', window.editorGuru.getValue());
+                        }
+                        
+                        formData.append('video_url', this.form.video || '');
+                        
+                        if (this.$refs.fileInput && this.$refs.fileInput.files[0]) {
+                            formData.append('pdf_file', this.$refs.fileInput.files[0]);
+                        }
+                    }
+
                     const res = await fetch('{{ route('guru.submateri.update', $subMateri->id) }}', {
-                        method: 'POST', // Tetap POST karena kita pakai _method PUT di dalam FormData
+                        method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            'Accept': 'application/json' // Memberitahu Laravel untuk merespons dengan JSON, bukan redirect
+                            'Accept': 'application/json'
                         },
                         body: formData
                     });
 
-                    // Cek jika response bukan 200-299
-                    if (!res.ok) {
-                        const errorData = await res.json();
-                        throw new Error(errorData.message || 'Terjadi kesalahan pada server');
-                    }
-
                     const data = await res.json();
                     
+                    if (!res.ok) throw new Error(data.message || 'Terjadi kesalahan server');
+
                     if (data.status === 'success') {
                         alert('Berhasil diperbarui!');
                         window.location.href = '{{ route("guru.submateri.dashboard", $materi_id) }}';
@@ -364,7 +386,7 @@
                     }
                 } catch (e) {
                     console.error("Update Error:", e);
-                    alert('Gagal menyimpan: ' + e.message);
+                    alert('Kesalahan: ' + e.message);
                 } finally {
                     btnSimpan.disabled = false;
                     btnSimpan.innerHTML = '<i class="fas fa-save mr-2"></i> Simpan Perubahan';
@@ -375,10 +397,80 @@
 </script>
 
 <style>
-    /* Styling agar Trix Editor terlihat rapi dan menyatu */
-    trix-toolbar { border-bottom: 1px solid #f1f5f9 !important; background: #f8fafc !important; border-radius: 2rem 2rem 0 0 !important; padding: 10px !important; }
-    trix-editor { border: none !important; min-height: 400px !important; font-family: 'Inter', sans-serif !important; padding: 2rem !important; }
-    .CodeMirror { height: 450px !important; font-size: 14px !important; border-radius: 0 0 1.8rem 1.8rem; }
+    /* 1. Base Trix Styling (Heading & List) */
+    trix-editor {
+        min-height: 450px !important;
+        padding: 2rem !important;
+        background-color: transparent !important;
+        border: none !important;
+        color: #475569;
+        font-weight: 500;
+        outline: none !important;
+        line-height: 1.6;
+    }
+    
+    /* Style untuk Heading 1 yang tadi ditanyakan */
+    trix-editor h1 {
+        font-size: 1.875rem !important;
+        font-weight: 700 !important;
+        line-height: 1.2 !important;
+        color: #1e293b !important;
+        display: block !important;
+        margin-bottom: 1rem !important;
+    }
+
+    trix-editor ul { list-style-type: disc !important; margin-left: 1.5rem !important; }
+    trix-editor ol { list-style-type: decimal !important; margin-left: 1.5rem !important; }
+
+    /* 2. Container & Toolbar (Amber Style) */
+    .trix-container {
+        border: 2px solid #f1f5f9; 
+        border-radius: 2rem;
+        overflow: hidden;
+        background: white;
+        transition: all 0.3s ease;
+    }
+
+    trix-toolbar { 
+        border-bottom: 1px solid #f1f5f9 !important; 
+        padding: 15px 20px !important; 
+        background: #fffbeb !important; /* amber-50 */
+        position: sticky; top: 0; z-index: 50;
+    }
+
+    /* Styling Button Active */
+    trix-toolbar .trix-button--active,
+    trix-toolbar .trix-button.trix-active { 
+        color: #fbbf24 !important; /* Amber */
+        background: white !important; 
+        border-radius: 8px !important; 
+    }
+
+    /* 3. Image Grid (3 Kolom seperti di Create) */
+    trix-editor figure.attachment {
+        display: inline-block !important;
+        vertical-align: top;
+        margin: 0 5px 10px 0 !important;
+        width: 31% !important; 
+        max-width: 31% !important;
+    }
+
+    trix-editor figure.attachment img {
+        width: 100% !important;
+        border-radius: 1rem;
+        height: auto !important;
+    }
+
+    trix-editor .attachment__metadata { display: none !important; }
+
+    /* 4. CodeMirror Dracula */
+    .CodeMirror { 
+        height: 450px !important; 
+        font-size: 14px !important; 
+        border-radius: 1.8rem; 
+        padding: 15px;
+    }
+
     [x-cloak] { display: none !important; }
 </style>
 @endsection

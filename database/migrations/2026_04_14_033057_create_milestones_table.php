@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('nama_milestone'); 
             $table->date('deadline');
             
-            $table->boolean('is_completed')->default(false); \
+            $table->boolean('is_completed')->default(false); 
             
             $table->text('feedback_guru')->nullable();
             $table->enum('status_review', ['pending', 'revisi', 'disetujui'])->default('pending');

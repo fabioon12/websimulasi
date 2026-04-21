@@ -123,7 +123,7 @@
                         </div>
                     @endif
                 </a>
-                <p x-show="!sidebarCollapsed" class="px-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-8 mb-2">Manajemen Tugas</p>
+                <p x-show="!sidebarCollapsed" class="px-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-8 mb-2">Manajemen Proyek</p>
 
                 {{-- Dropdown Workspace (Hanya muncul jika ada proyek aktif) --}}
                 <a href="{{ route('siswa.workspace.index') }}" class="flex items-center gap-4 px-4 py-3 rounded-xl font-bold transition {{ Request::is('siswa/workspace*') ? 'sidebar-active shadow-sm' : 'text-slate-500 hover:bg-slate-50' }}">

@@ -109,8 +109,6 @@ class SubmateriController extends Controller
     {
   
         $subMateri = SubMateris::with('kuis')->findOrFail($id);
-        
-  
         return view('guru.submateri.edit', compact('subMateri', 'materi_id'));
     }
 
@@ -133,7 +131,6 @@ class SubmateriController extends Controller
             $sub->tipe = $request->tipe;
 
             if ($request->tipe !== 'kuis') {
-                // Logika Update Materi Biasa
                 $sub->bacaan = $request->bacaan;
                 $sub->video_url = $request->video_url; 
                 $sub->instruksi_coding = $request->instruksi_coding;
@@ -146,11 +143,7 @@ class SubmateriController extends Controller
                     $sub->pdf_path = $request->file('pdf_file')->store('modul_pdf', 'public');
                 }
             } else {
-                // --- LOGIKA UPDATE KUIS ---
-                // 1. Hapus soal-soal lama yang ada di SubMateriKuis
                 $sub->kuis()->delete(); 
-
-                // 2. Ambil data kuis baru dari request (JSON string)
                 $questions = is_array($request->kuis_data) 
                             ? $request->kuis_data 
                             : json_decode($request->kuis_data, true);
@@ -221,7 +214,6 @@ class SubmateriController extends Controller
     {
         if ($request->hasFile('image')) {
             $file = $request->file('image');
-            // Simpan ke folder public/uploads/materi
             $path = $file->store('uploads/materi', 'public');
             
             return response()->json([

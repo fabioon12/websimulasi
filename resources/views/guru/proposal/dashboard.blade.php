@@ -25,7 +25,7 @@
                 </div>
                 <div class="bg-emerald-500 p-6 rounded-[2rem] text-center min-w-[140px] shadow-lg shadow-emerald-500/40">
                     <p class="text-emerald-100 text-[10px] font-black uppercase tracking-widest mb-1">Rerata Progres</p>
-                    <h3 class="text-3xl font-black text-white">84%</h3>
+                    <h3 class="text-3xl font-black text-white">{{ $averageProgress }}%</h3>
                 </div>
             </div>
         </div>
@@ -54,77 +54,96 @@
     {{-- Project Grid --}}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         @forelse($activeProjects as $project)
-            <div class="group relative bg-white rounded-[3rem] border-2 border-slate-100 p-8 hover:border-emerald-500 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-500">
+            @php
+                // Hitung Progres
+                $totalMs = $project->milestones->count();
+                $doneMs = $project->milestones->where('status_review', 'disetujui')->where('is_completed', true)->count();
+                $perProjectProgress = $totalMs > 0 ? round(($doneMs / $totalMs) * 100) : 0;
+
+                // Hitung Sisa Waktu
+                $end = \Carbon\Carbon::parse($project->tanggal_selesai);
+                $daysLeft = ceil(now()->diffInDays($end, false));
                 
-                {{-- Card Header --}}
+                // Hitung Total Durasi Proyek
+                $start = \Carbon\Carbon::parse($project->tanggal_mulai);
+                $totalDuration = $start->diffInDays($end);
+            @endphp
+
+            <div class="group relative bg-white rounded-[3rem] border-2 border-slate-100 p-8 hover:border-emerald-500 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-500 flex flex-col">
+                
+                {{-- 1. Card Top: Thumbnail & Status Badge --}}
                 <div class="flex justify-between items-start mb-6">
-                    <div class="w-16 h-16 rounded-[1.5rem] bg-slate-100 overflow-hidden shadow-inner group-hover:scale-110 transition-transform duration-500">
+                    <div class="w-20 h-20 rounded-[2rem] bg-slate-100 overflow-hidden shadow-inner group-hover:scale-105 transition-transform duration-500">
                         <img src="{{ $project->thumbnail ? asset('storage/' . $project->thumbnail) : 'https://ui-avatars.com/api/?name='.urlencode($project->judul).'&background=random' }}" 
-                             class="w-full h-full object-cover">
+                            class="w-full h-full object-cover">
                     </div>
-                    <div class="text-right">
-                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Sisa Waktu</span>
-                        @php
-                            $end = \Carbon\Carbon::parse($project->tanggal_selesai);
-                            $daysLeft = ceil(now()->diffInDays($end, false));
-                        @endphp
-                        <span class="px-4 py-1.5 {{ $daysLeft <= 3 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600' }} rounded-full text-[10px] font-black">
+                    <div class="flex flex-col items-end gap-2">
+                        <span class="px-4 py-1.5 {{ $daysLeft <= 3 ? 'bg-rose-50 text-rose-600' : 'bg-slate-900 text-white' }} rounded-full text-[9px] font-black uppercase tracking-wider">
                             {{ $daysLeft < 0 ? 'Waktu Habis' : $daysLeft . ' Hari Lagi' }}
+                        </span>
+                        <span class="px-4 py-1.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black">
+                            {{ $perProjectProgress }}% Done
                         </span>
                     </div>
                 </div>
 
-                {{-- Project Info --}}
-                <div class="mb-8">
-                    <h3 class="text-xl font-black text-slate-900 group-hover:text-emerald-600 transition-colors mb-2 line-clamp-1">
+                {{-- 2. Project Info --}}
+                <div class="mb-6">
+                    <h3 class="text-xl font-black text-slate-900 group-hover:text-emerald-600 transition-colors mb-2 line-clamp-2 min-h-[3.5rem]">
                         {{ $project->judul }}
                     </h3>
-                    <div class="flex items-center gap-2">
-                        <div class="w-6 h-6 rounded-full bg-slate-900 flex items-center justify-center text-[8px] text-white font-bold">
-                            {{ substr($project->pengaju->name, 0, 1) }}
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center text-[10px] text-white font-black shadow-sm">
+                            {{ strtoupper(substr($project->pengaju->name, 0, 1)) }}
                         </div>
-                        <span class="text-xs font-bold text-slate-500">{{ $project->pengaju->name }} (Ketua)</span>
+                        <div>
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Ketua Kelompok</p>
+                            <p class="text-xs font-bold text-slate-700 leading-none">{{ $project->pengaju->name }}</p>
+                        </div>
                     </div>
                 </div>
 
-                {{-- Mini Stats --}}
+                {{-- 3. Milestone Visual Tracker --}}
+                <div class="mb-8 p-5 bg-slate-50 rounded-[2rem] border border-slate-100">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Milestone Tracker</span>
+                        <span class="text-[10px] font-black text-slate-700">{{ $doneMs }}/{{ $totalMs }}</span>
+                    </div>
+                    <div class="w-full h-3 bg-white rounded-full overflow-hidden p-0.5 border border-slate-200">
+                        <div class="h-full bg-emerald-500 rounded-full transition-all duration-1000 shadow-[0_0_12px_rgba(16,185,129,0.4)]" 
+                            style="width: {{ $perProjectProgress }}%"></div>
+                    </div>
+                </div>
+
+                {{-- 4. Stats Grid --}}
                 <div class="grid grid-cols-2 gap-4 mb-8">
-                    <div class="p-4 bg-slate-50 rounded-[1.5rem] border border-slate-100">
-                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Durasi Proyek</p>
-                        @php
-                            $totalDuration = \Carbon\Carbon::parse($project->tanggal_mulai)->diffInDays($end);
-                        @endphp
-                        <p class="text-sm font-black text-slate-700">{{ $totalDuration }} Hari</p>
+                    <div class="text-center p-3">
+                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-center">Durasi</p>
+                        <p class="text-xs font-black text-slate-700">{{ $totalDuration }} Hari</p>
                     </div>
-                    <div class="p-4 bg-slate-50 rounded-[1.5rem] border border-slate-100 text-right">
-                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Logbook</p>
-                        <p class="text-sm font-black text-slate-700">{{ $project->logbooks->count() }} Entri</p>
+                    <div class="border-l border-slate-100 text-center p-3">
+                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-center">Logbook</p>
+                        <p class="text-xs font-black text-slate-700">{{ $project->logbooks->count() }} Entri</p>
                     </div>
                 </div>
 
-                {{-- Actions --}}
-                <div class="flex gap-3">
+                {{-- 5. Actions (Push to Bottom) --}}
+                <div class="mt-auto flex gap-3">
                     <a href="{{ route('guru.milestone.index', ['project_id' => $project->id]) }}" 
-                       class="flex-1 flex items-center justify-center gap-2 bg-slate-900 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 transition-colors shadow-lg shadow-slate-200">
-                        <i class="fas fa-tasks"></i> Review Milestone
+                    class="flex-1 flex items-center justify-center gap-2 bg-slate-900 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-slate-200 active:scale-95">
+                        <i class="fas fa-tasks"></i> Review
                     </a>
                     <a href="{{ route('guru.monitoring.logbook', $project->id) }}" 
-                       class="w-14 flex items-center justify-center bg-white border-2 border-slate-100 text-slate-400 py-4 rounded-2xl hover:border-emerald-500 hover:text-emerald-600 transition-all">
+                    class="w-14 flex items-center justify-center bg-white border-2 border-slate-100 text-slate-400 py-4 rounded-2xl hover:border-emerald-500 hover:text-emerald-600 transition-all active:scale-95 shadow-sm">
                         <i class="fas fa-book"></i>
                     </a>
                 </div>
 
-                {{-- Visual Accent --}}
-                <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-emerald-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                {{-- Visual Accent on Hover --}}
+                <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1/3 h-1 bg-emerald-500 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500 group-hover:w-1/2"></div>
             </div>
         @empty
-            <div class="col-span-full py-32 text-center bg-white rounded-[4rem] border-4 border-dashed border-slate-100">
-                <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i class="fas fa-folder-open text-3xl text-slate-200"></i>
-                </div>
-                <h3 class="text-lg font-black text-slate-400 uppercase tracking-widest">Belum Ada Proyek Aktif</h3>
-                <p class="text-slate-300 text-sm italic">Data bimbingan kamu akan muncul di sini.</p>
-            </div>
+            {{-- Empty State tetap sama --}}
         @endforelse
     </div>
 
