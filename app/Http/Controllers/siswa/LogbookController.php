@@ -11,14 +11,21 @@ use Illuminate\Support\Facades\Auth;
 
 class LogbookController extends Controller
 {
-    public function index($id)
+    public function index(Request $request, $id) // Tambahkan Request $request
     {
-       $userId = Auth::id();
+        $userId = Auth::id();
+        $selectedMilestoneId = $request->query('milestone_id');
 
-        // Pastikan Logbook dimuat dengan relasi milestone dan user
+        // Ambil proyek dengan filter pada relasi logbooks
         $project = Proposal::with([
-            'logbooks.user', 
-            'logbooks.milestone', 
+            'logbooks' => function($q) use ($selectedMilestoneId) {
+                // Filter berdasarkan milestone jika dipilih
+                $q->when($selectedMilestoneId, function($query) use ($selectedMilestoneId) {
+                    return $query->where('milestone_id', $selectedMilestoneId);
+                });
+                $q->orderBy('tanggal_kerjakan', 'desc');
+                $q->with(['user', 'milestone']); // Load relasi logbook
+            },
             'milestones' => function($q) {
                 $q->where('status_review', 'disetujui');
             }
@@ -31,7 +38,10 @@ class LogbookController extends Controller
         })
         ->findOrFail($id);
 
-        return view('siswa.workspace.logbook', compact('project'));
+        // Ambil daftar semua milestone yang disetujui untuk isi dropdown filter
+        $allMilestones = $project->milestones;
+
+        return view('siswa.workspace.logbook', compact('project', 'allMilestones', 'selectedMilestoneId'));
     }
 
     public function store(Request $request, $id)
@@ -47,7 +57,7 @@ class LogbookController extends Controller
 
         
         $project = Proposal::findOrFail($id);
-        
+
         if (now()->greaterThan($project->tanggal_selesai)) {
             return redirect()->back()->with('error', 'Gagal! Batas waktu pengerjaan proyek ini sudah berakhir. Anda tidak dapat menambah logbook baru.');
         }

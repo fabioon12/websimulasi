@@ -21,9 +21,35 @@
             </div>
             <div>
                 <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Total Aktivitas</p>
-                <p class="text-xl font-black text-slate-900">{{ $project->logbooks->count() }} Laporan</p>
+                <p class="text-xl font-black text-slate-900">{{ $project->milestones->flatMap->logbooks->count() }} Laporan</p>
             </div>
         </div>
+    </div>
+
+    {{-- Dropdown Filter Milestone --}}
+    <div class="mb-12 flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-[2.5rem] border border-slate-100 shadow-sm">
+        <div class="flex items-center gap-3 px-4">
+            <i class="fas fa-filter text-emerald-500"></i>
+            <span class="text-xs font-black text-slate-700 uppercase tracking-widest">Filter Milestone</span>
+        </div>
+        
+        <form action="{{ url()->current() }}" method="GET" class="flex items-center gap-2 w-full md:w-auto">
+            <select name="milestone_id" onchange="this.form.submit()" 
+                class="flex-grow md:w-72 bg-slate-50 border-none focus:ring-2 focus:ring-emerald-500 rounded-2xl text-xs font-bold py-3 px-5 outline-none transition-all">
+                <option value="">Tampilkan Semua Milestone</option>
+                @foreach($allMilestones as $m)
+                    <option value="{{ $m->id }}" {{ request('milestone_id') == $m->id ? 'selected' : '' }}>
+                        {{ $m->nama_milestone }}
+                    </option>
+                @endforeach
+            </select>
+            
+            @if(request('milestone_id'))
+                <a href="{{ url()->current() }}" class="w-11 h-11 flex items-center justify-center bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-sm" title="Reset Filter">
+                    <i class="fas fa-times"></i>
+                </a>
+            @endif
+        </form>
     </div>
 
     {{-- Looping Milestone --}}
@@ -46,7 +72,7 @@
                     </div>
                 </div>
 
-                {{-- Timeline Logbook di dalam Milestone ini --}}
+                {{-- Timeline Logbook --}}
                 <div class="relative ml-4 md:ml-8 border-l-2 border-slate-100 pl-8 md:pl-12 space-y-12">
                     @forelse($ms->logbooks as $log)
                         <div class="relative group">
@@ -65,11 +91,21 @@
                                             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter mt-1">Kontributor Proyek</p>
                                         </div>
                                     </div>
-                                    <div class="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-2xl border border-slate-100">
-                                        <i class="far fa-calendar-alt text-emerald-500 text-[10px]"></i>
-                                        <span class="text-[10px] font-black text-slate-600">
-                                            {{ \Carbon\Carbon::parse($log->tanggal_kerjakan)->format('d M Y') }}
-                                        </span>
+                                    
+                                    {{-- Badge Tanggal & Jam --}}
+                                    <div class="flex items-center gap-4 px-4 py-2 bg-slate-50 rounded-2xl border border-slate-100">
+                                        <div class="flex items-center gap-2 pr-3 border-r border-slate-200">
+                                            <i class="far fa-calendar-alt text-emerald-500 text-[10px]"></i>
+                                            <span class="text-[10px] font-black text-slate-600">
+                                                {{ \Carbon\Carbon::parse($log->tanggal_kerjakan)->format('d M Y') }}
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <i class="far fa-clock text-blue-500 text-[10px]"></i>
+                                            <span class="text-[10px] font-black text-slate-600">
+                                                {{ \Carbon\Carbon::parse($log->created_at)->timezone('Asia/Jakarta')->format('H:i') }} WIB
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -84,7 +120,7 @@
                                     </div>
                                 </div>
 
-                                {{-- Lampiran Section --}}
+                                {{-- Lampiran --}}
                                 @if($log->lampiran)
                                     <div class="mb-8 pt-6 border-t border-slate-50">
                                         <p class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Dokumen Lampiran</p>
@@ -109,7 +145,7 @@
                                     </div>
                                 @endif
 
-                                {{-- SECTION FEEDBACK GURU --}}
+                                {{-- Feedback Guru --}}
                                 <div class="mt-4 pt-6 border-t-2 border-dashed border-slate-100">
                                     @if($log->feedback_guru)
                                         <div class="bg-emerald-50/50 p-5 rounded-[1.5rem] border border-emerald-100 mb-4 relative group/msg">
@@ -128,14 +164,13 @@
                                         </div>
                                     @endif
 
-                                    {{-- Form Input/Edit Feedback --}}
                                     <div id="form-feedback-{{ $log->id }}" class="{{ $log->feedback_guru ? 'hidden' : '' }} animate-in fade-in slide-in-from-top-2">
                                         <form action="{{ route('guru.logbook.feedback', $log->id) }}" method="POST">
                                             @csrf @method('PATCH')
                                             <div class="flex flex-col md:flex-row gap-3">
                                                 <div class="relative flex-grow">
                                                     <input type="text" name="feedback_guru" 
-                                                        placeholder="Berikan arahan atau apresiasi untuk tugas ini..." 
+                                                        placeholder="Berikan arahan atau apresiasi..." 
                                                         class="w-full bg-slate-50 border-2 border-transparent focus:border-emerald-500 focus:bg-white rounded-[1.25rem] text-xs font-medium py-4 pl-6 pr-4 transition-all outline-none"
                                                         value="{{ $log->feedback_guru }}">
                                                 </div>
@@ -151,23 +186,21 @@
                         </div>
                     @empty
                         <div class="p-12 bg-slate-50/50 rounded-[3rem] border-4 border-dashed border-slate-100 text-center">
-                            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-                                <i class="fas fa-ghost text-slate-200 text-2xl"></i>
-                            </div>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Belum ada progres dilaporkan</p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Belum ada aktivitas di milestone ini</p>
                         </div>
                     @endforelse
                 </div>
             </div>
         @empty
             <div class="py-24 text-center bg-white rounded-[4rem] border-4 border-dashed border-slate-100">
-                <i class="fas fa-map-marked-alt text-5xl text-slate-100 mb-6"></i>
-                <h3 class="text-lg font-black text-slate-400 uppercase tracking-[0.2em]">Belum Ada Milestone</h3>
-                <p class="text-slate-300 text-sm italic">Siswa belum menambahkan target pengerjaan (Milestone).</p>
+                <i class="fas fa-search text-5xl text-slate-100 mb-6"></i>
+                <h3 class="text-lg font-black text-slate-400 uppercase tracking-[0.2em]">Tidak Ada Data</h3>
+                <p class="text-slate-300 text-sm italic">Silakan sesuaikan filter atau tunggu update dari siswa.</p>
             </div>
         @endforelse
     </div>
 </div>
+
 <script>
     function toggleEdit(id) {
         const form = document.getElementById('form-feedback-' + id);

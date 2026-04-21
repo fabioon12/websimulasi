@@ -10,12 +10,17 @@ use App\Models\Milestone;
 use App\Models\Logbook;
 class LogbookController extends Controller
 {
-    public function logbook($id)
+    public function logbook(Request $request, $id) // Tambahkan parameter Request
     {
-        // Ambil proyek beserta logbook yang diurutkan dari yang terbaru
+        $selectedMilestoneId = $request->query('milestone_id');
+
         $project = Proposal::with([
-            'milestones' => function($q) {
-                $q->orderBy('deadline', 'asc'); 
+            'milestones' => function($q) use ($selectedMilestoneId) {
+                $q->orderBy('deadline', 'asc');
+                // Jika ada milestone yang dipilih, filter di sini
+                $q->when($selectedMilestoneId, function($query) use ($selectedMilestoneId) {
+                    return $query->where('id', $selectedMilestoneId);
+                });
             },
             'milestones.logbooks' => function($q) {
                 $q->latest(); 
@@ -23,7 +28,10 @@ class LogbookController extends Controller
             'milestones.logbooks.user'
         ])->findOrFail($id);
 
-    return view('guru.logbook.index', compact('project'));
+        // Kita juga butuh daftar semua milestone untuk isi dropdown filter
+        $allMilestones = \App\Models\Milestone::where('proposal_id', $id)->get();
+
+        return view('guru.logbook.index', compact('project', 'allMilestones', 'selectedMilestoneId'));
     }
     public function updateFeedback(Request $request, $id)
     {
