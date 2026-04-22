@@ -68,9 +68,32 @@ class WorkspaceController extends Controller
                 ->with('error', 'Akses ditolak. Proyek ini belum disetujui oleh mentor.');
         }
 
-        // Kita tetap kirim dengan nama 'project' agar cocok dengan View sebelumnya
-        // Atau kamu bisa ganti di View dari $project menjadi $proyek
         return view('siswa.workspace.show', ['project' => $proyek]);
     }
+    public function destroy($id)
+    {
+        $userId = Auth::id();
 
+        // Cari proyek berdasarkan ID
+        $proyek = Proposal::findOrFail($id);
+
+        // Keamanan: Cek apakah user yang login adalah pemilik proyek (pengaju_id)
+        if ($proyek->pengaju_id !== $userId) {
+            return redirect()->back()->with('error', 'Kamu tidak memiliki izin untuk menghapus proyek ini.');
+        }
+
+        // Opsional: Jika kamu ingin proyek yang sudah disetujui tidak bisa dihapus (misal harus oleh admin)
+        // if ($proyek->status === 'disetujui') {
+        //     return redirect()->back()->with('error', 'Proyek yang sudah disetujui tidak dapat dihapus.');
+        // }
+
+        try {
+            // Hapus data (Relasi anggota, logbook, dll biasanya terhapus otomatis jika menggunakan onCascadeDelete di migration)
+            $proyek->delete();
+
+            return redirect()->route('siswa.workspace.index')->with('success', 'Workspace berhasil dihapus.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus data.');
+        }
+    }
 }

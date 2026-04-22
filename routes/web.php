@@ -62,16 +62,17 @@ Route::middleware(['auth'])->group(function () {
         Route::get('proyek/dashboard', [GuruProyekController::class, 'index'])->name('proyek.dashboard');
         Route::get('proyek/create', [GuruProyekController::class, 'create'])->name('proyek.create');
         Route::post('proyek/store', [GuruProyekController::class, 'store'])->name('proyek.store');
+        Route::get('/proyek/{id}/edit', [GuruProyekController::class, 'edit'])->name('proyek.edit');
+        Route::put('/proyek/{id}', [GuruProyekController::class, 'update'])->name('proyek.update');
         Route::delete('proyek/{id}', [GuruProyekController::class, 'destroy'])->name('proyek.destroy');
         Route::get('proyek/{id}/roadmap', [GuruProyekController::class, 'roadmap'])->name('proyek.roadmap');
         Route::post('proyek/roadmap/store', [GuruProyekController::class, 'storeRoadmap'])->name('proyek.roadmap.store');
+        Route::put('proyek/roadmap/{id}', [GuruProyekController::class, 'updateRoadmap'])->name('proyek.roadmap.update');
         Route::delete('proyek/roadmap/{id}', [GuruProyekController::class, 'destroyRoadmap'])->name('proyek.roadmap.destroy');
         Route::post('/trix/upload', [GuruProyekController::class, 'uploadTrix'])->name('proyek.trix.upload');
-        Route::get('/proyek/{id}/edit', [GuruProyekController::class, 'edit'])->name('proyek.edit');
+
         Route::post('/submateri/upload-attachment', [GuruSubmateriController::class, 'uploadAttachment'])->name('submateri.uploadAttachment');
-        Route::put('/proyek/{id}', [GuruProyekController::class, 'update'])->name('proyek.update');
-        Route::put('proyek/roadmap/{id}', [GuruProyekController::class, 'updateRoadmap'])->name('proyek.roadmap.update');
-        Route::get('proyek/review-tugas', [ReviewTugasController::class, 'index'])->name('review.index');
+        Route::get('/guru/review-tugas/{proyek_id}', [ReviewTugasController::class, 'index'])->name('review.index');
         Route::patch('proyek/review-tugas/{id}', [ReviewTugasController::class, 'update'])->name('review.update');
 
         Route::get('/proposal', [ProposalApprovalController::class, 'index'])->name('proposal.index');
@@ -118,6 +119,8 @@ Route::middleware(['auth'])->group(function () {
 
         Route::post('/workspace/{id}/milestones', [MilestoneController::class, 'store'])->name('milestone.store');
         Route::patch('/milestone/{id}/complete', [MilestoneController::class, 'complete'])->name('milestone.complete');
+
+        Route::delete('/workspace/{id}', [WorkspaceController::class, 'destroy'])->name('workspace.destroy');
 
 
     });

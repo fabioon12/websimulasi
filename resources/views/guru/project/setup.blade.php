@@ -14,21 +14,99 @@
         background-color: #f8fafc !important;
         border-radius: 1.5rem !important;
         padding: 1.25rem !important;
-        min-height: 150px !important;
+        min-height: 250px !important; /* Ditinggikan agar nyaman mengetik */
         font-size: 0.875rem !important;
         outline: none !important;
     }
-    trix-editor:focus {
-        ring: 2px;
-        ring-color: #6366f1;
-    }
-    .trix-button-group--file-tools { display: none !important; }
+
+    /* Pastikan tombol gambar MUNCUL */
+    .trix-button--icon-attach { display: inline-block !important; }
     
-    /* Content Formatting inside Timeline */
-    .instruction-content img {
-        max-width: 100%;
-        border-radius: 1rem;
-        margin-top: 0.5rem;
+    /* Styling Heading 1 agar terlihat beda di editor */
+    trix-editor h1 {
+        font-size: 1.5rem !important;
+        font-weight: 800 !important;
+        color: #1e293b !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* Membuat Gambar Menjadi Grid 3 Kolom */
+    trix-editor figure {
+        display: inline-block !important;
+        width: 32% !important; /* Sekitar 3 kolom */
+        margin: 0.5% !important;
+        vertical-align: top !important;
+        padding: 0 !important;
+    }
+
+    trix-editor figure img {
+        width: 100% !important;
+        height: auto !important;
+        border-radius: 1rem !important;
+        object-fit: cover;
+    }
+
+    /* List Styling */
+    trix-editor ul { list-style-type: disc !important; margin-left: 1rem !important; }
+    trix-editor ol { list-style-type: decimal !important; margin-left: 1rem !important; }
+    .instruction-content {
+        line-height: 1.8;
+        color: #475569; /* slate-600 */
+    }
+
+    /* Styling Heading 1 di Timeline */
+    .instruction-content h1 {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.025em;
+        text-transform: uppercase;
+    }
+
+    /* GRID GAMBAR: 3 Kolom di Timeline */
+    /* Trix membungkus gambar dalam tag <figure> */
+    .instruction-content figure {
+        display: inline-block !important;
+        width: 31% !important; /* 3 kolom */
+        margin: 1% !important;
+        vertical-align: top;
+    }
+
+    .instruction-content figure img {
+        width: 100%;
+        height: 150px; /* Tinggi seragam agar rapi */
+        object-fit: cover;
+        border-radius: 1.25rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .instruction-content figure img:hover {
+        transform: scale(1.05);
+    }
+
+    /* List Styling agar peluru muncul */
+    .instruction-content ul { 
+        list-style-type: disc !important; 
+        margin-left: 1.25rem !important; 
+        margin-bottom: 1rem;
+    }
+    .instruction-content ol { 
+        list-style-type: decimal !important; 
+        margin-left: 1.25rem !important; 
+        margin-bottom: 1rem;
+    }
+    .instruction-content li {
+        margin-bottom: 0.25rem;
+    }
+
+    /* Responsive untuk HP (Jadi 2 kolom) */
+    @media (max-width: 640px) {
+        .instruction-content figure {
+            width: 47% !important;
+        }
     }
 </style>
 
@@ -225,9 +303,11 @@
                     </div>
                 </div>
                 <div class="space-y-1">
-                    <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Instruksi</label>
+                    <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Instruksi Pengerjaan</label>
+                    {{-- Input hidden untuk menampung data --}}
                     <input id="edit-instruksi-hidden" type="hidden" name="instruksi">
-                    <trix-editor id="edit-trix" input="edit-instruksi-hidden"></trix-editor>
+                    {{-- Editor menunjuk ke ID input di atas --}}
+                    <trix-editor id="edit-trix" input="edit-instruksi-hidden" placeholder="Tulis instruksi..."></trix-editor>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
@@ -249,16 +329,68 @@
 </div>
 
 <script>
+    // 1. Trix Configuration (Heading 1 & Upload)
+    document.addEventListener("trix-before-initialize", () => {
+        Trix.config.blockAttributes.heading1 = {
+            tagName: "h1",
+            terminal: true,
+            breakOnReturn: true,
+            group: false
+        };
+    });
+
+    // 2. Fungsi Switch Role (PENTING: Untuk ganti tab & update ID Role di form input)
+    function switchRole(roleSlug, roleId) {
+        // Update visual tombol tab
+        document.querySelectorAll('.role-tab').forEach(btn => {
+            btn.classList.remove('bg-indigo-500', 'text-white', 'shadow-xl');
+            btn.classList.add('bg-slate-50', 'text-slate-400');
+        });
+
+        const activeBtn = document.getElementById('btn-' + roleSlug);
+        if (activeBtn) {
+            activeBtn.classList.add('bg-indigo-500', 'text-white', 'shadow-xl');
+        }
+
+        // UPDATE INPUT HIDDEN (Agar saat tambah tugas, masuk ke role yang benar)
+        const roleInput = document.getElementById('proyek_role_id');
+        if (roleInput) {
+            roleInput.value = roleId;
+        }
+
+        // Update Text Display (Nama Role di Header Timeline)
+        const roleName = activeBtn.querySelector('span').innerText;
+        document.getElementById('role-name-display').innerText = roleName;
+        document.getElementById('timeline-role-name').innerText = roleName;
+
+        // Switch Content Timeline
+        document.querySelectorAll('.role-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+        const targetContent = document.getElementById('content-' + roleSlug);
+        if (targetContent) {
+            targetContent.classList.remove('hidden');
+        }
+    }
+
+    // 3. Fungsi Open Edit Modal
     function openEditModal(task) {
         const modal = document.getElementById('editModal');
         const form = document.getElementById('editForm');
-        form.action = `/guru/roadmap/${task.id}`; 
+        
+        let url = "{{ route('guru.proyek.roadmap.update', ':id') }}";
+        form.action = url.replace(':id', task.id); 
+
         document.getElementById('edit-urutan').value = task.urutan;
         document.getElementById('edit-judul').value = task.judul_tugas;
         document.getElementById('edit-deadline').value = task.deadline_tugas;
         document.getElementById('edit-poin').value = task.poin;
+        
         const trixEditor = document.querySelector("#edit-trix");
-        trixEditor.editor.loadHTML(task.instruksi);
+        if (trixEditor && trixEditor.editor) {
+            trixEditor.editor.loadHTML(task.instruksi || "");
+        }
+        
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
@@ -268,34 +400,20 @@
         document.body.style.overflow = 'auto';
     }
 
-    function switchRole(roleSlug, roleId) {
-        document.querySelectorAll('.role-tab').forEach(btn => {
-            btn.classList.remove('bg-indigo-500', 'text-white', 'shadow-xl');
-            btn.classList.add('bg-slate-50', 'text-slate-400');
-        });
-        const activeBtn = document.getElementById('btn-' + roleSlug);
-        activeBtn.classList.add('bg-indigo-500', 'text-white', 'shadow-xl');
-        document.getElementById('proyek_role_id').value = roleId;
-        const roleName = activeBtn.querySelector('span').innerText;
-        document.getElementById('role-name-display').innerText = roleName;
-        document.getElementById('timeline-role-name').innerText = roleName;
-        document.querySelectorAll('.role-content').forEach(content => content.classList.add('hidden'));
-        document.getElementById('content-' + roleSlug).classList.remove('hidden');
-    }
+    // 4. Attachment/Image Upload Logic
     (function() {
-    var HOST = "{{ route('guru.proyek.trix.upload') }}"; 
+        var HOST = "{{ route('guru.proyek.trix.upload') }}"; 
 
-    addEventListener("trix-attachment-add", function(event) {
-        if (event.attachment.file) {
-            uploadFileAttachment(event.attachment);
-        }
-    });
+        addEventListener("trix-attachment-add", function(event) {
+            if (event.attachment.file) {
+                uploadFileAttachment(event.attachment);
+            }
+        });
 
-    function uploadFileAttachment(attachment) {
+        function uploadFileAttachment(attachment) {
             var file = attachment.file;
             var form = new FormData;
-            form.append("Content-Type", file.type);
-            form.append("file", file);
+            form.append("file", file); 
             form.append("_token", "{{ csrf_token() }}");
 
             var xhr = new XMLHttpRequest;
@@ -313,9 +431,11 @@
                         url: data.url,
                         href: data.url
                     });
+                } else {
+                    alert("Upload gagal!");
+                    attachment.remove();
                 }
             };
-
             xhr.send(form);
         }
     })();

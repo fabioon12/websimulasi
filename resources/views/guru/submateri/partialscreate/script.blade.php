@@ -5,99 +5,142 @@
 
 <style>
     /* 1. Base Editor Styling */
-    trix-editor {
+    trix-editor, .trix-content {
         min-height: 450px !important;
         padding: 2rem !important;
-        background-color: transparent !important;
-        border: none !important;
-        color: #475569;
-        font-weight: 500;
-        outline: none !important;
+        background-color: white !important;
+        color: #334155;
         line-height: 1.6;
-        display: block !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 0 0 1.5rem 1.5rem;
+        outline: none !important;
     }
-    trix-editor h1 {
+
+    /* 2. Heading & Text Styling */
+    trix-editor h1, .trix-content h1 {
         font-size: 1.875rem !important;
         font-weight: 700 !important;
-        line-height: 1.2 !important;
+        margin-bottom: 1rem !important;
         color: #1e293b !important;
         display: block !important;
-    }
-    /* 2. List Styling */
-    trix-editor ul { list-style-type: disc !important; margin-left: 1.5rem !important; }
-    trix-editor ol { list-style-type: decimal !important; margin-left: 1.5rem !important; }
-    trix-editor li { display: list-item !important; margin-bottom: 0.25rem !important; }
-
-    /* 4. Toolbar & Dropdown Styling */
-    trix-toolbar { 
-        border-bottom: 1px solid #f1f5f9 !important; 
-        padding: 15px 20px !important; 
-        background: white !important;
-        position: sticky; top: 0; z-index: 50;
-        border-top-left-radius: 1.5rem; border-top-right-radius: 1.5rem;
+        clear: both;
     }
 
-    .trix-select {
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 6px 10px;
-        font-size: 11px;
-        font-weight: 800;
-        color: #475569;
-        margin-right: 5px;
-        background: #f8fafc;
-        cursor: pointer;
-        outline: none;
+    trix-editor p, .trix-content p {
+        margin-bottom: 1rem !important;
+        clear: both;
     }
 
-    trix-toolbar .trix-button--active,
-    trix-toolbar .trix-button.trix-active { 
-        color: #2563eb !important; 
-        background: #eff6ff !important; 
-        border-radius: 8px !important; 
+    /* 3. List Styling */
+    trix-editor ul, .trix-content ul { 
+        list-style-type: disc !important; 
+        margin-left: 1.5rem !important; 
+        margin-bottom: 1rem !important;
+        display: block !important;
+    }
+    trix-editor ol, .trix-content ol { 
+        list-style-type: decimal !important; 
+        margin-left: 1.5rem !important; 
+        margin-bottom: 1rem !important;
+        display: block !important;
+    }
+    trix-editor li, .trix-content li { 
+        display: list-item !important; 
+        margin-bottom: 0.25rem !important; 
     }
 
-    /* CodeMirror */
-    .CodeMirror { height: 250px; font-family: 'Fira Code', monospace; font-size: 13px; border-radius: 1rem; }
-    .trix-content {
-        display: flex;
-        flex-wrap: wrap; /* Supaya jika layar kecil, gambar turun ke bawah */
-        gap: 20px;       /* Jarak antar gambar */
-        justify-content: center;
-    }
-    trix-editor, .trix-content {
-        display: block; /* Default untuk teks */
-    }
-
-    /* Targetkan area yang berisi rangkaian attachment (gambar) */
-    trix-editor, .trix-content {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        gap: 15px !important;
+    /* 4. Image Grid Styling (Dynamic 1 or 2 Grid) */
+    
+    /* State Default: 1 Gambar (Full Width) */
+    trix-editor figure.attachment, 
+    .trix-content figure.attachment {
+        display: block !important;
+        margin: 0 auto 20px auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        transition: all 0.3s ease;
     }
 
-    /* Mengatur gambar (figure) agar otomatis menjadi kolom */
-    trix-editor figure.attachment {
-        display: inline-block !important; /* Paksa berjajar ke samping */
+    /* State: Jika terdeteksi minimal ada 2 gambar (Grid 2 Kolom) */
+    /* Menggunakan nth-of-type(2) agar lebih akurat mendeteksi jumlah gambar */
+    trix-editor:has(figure.attachment:nth-of-type(2)) figure.attachment,
+    .trix-content:has(figure.attachment:nth-of-type(2)) figure.attachment {
+        display: inline-block !important;
         vertical-align: top;
-        margin: 0 5px 10px 0 !important;
-        /* Untuk 2 kolom pakai 48%, untuk 3 kolom pakai 31% */
-        width: 31% !important; 
-        max-width: 31% !important;
+        width: 49% !important; /* Lebar disesuaikan agar pas 2 kolom */
+        max-width: 49% !important;
+        margin: 0 0.5% 15px 0.5% !important;
     }
 
-    /* Memastikan gambar memenuhi ruang kolomnya */
-    trix-editor figure.attachment img {
+    /* Styling Gambar didalamnya */
+    trix-editor figure.attachment img, 
+    .trix-content figure.attachment img {
         width: 100% !important;
         height: auto !important;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        object-fit: cover;
     }
 
-    /* Menghilangkan metadata (nama file/ukuran) agar tidak merusak layout */
+    /* Menghilangkan Metadata */
     trix-editor .attachment__metadata {
         display: none !important;
     }
 
+    /* Caption Styling */
+    trix-editor figcaption, .trix-content figcaption {
+        text-align: center !important;
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-top: 5px;
+    }
+
+    /* 5. Toolbar Styling */
+    trix-toolbar { 
+        border: 1px solid #e2e8f0 !important;
+        border-bottom: none !important;
+        padding: 15px 20px !important; 
+        background: #f8fafc !important;
+        border-top-left-radius: 1.5rem; 
+        border-top-right-radius: 1.5rem;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    trix-toolbar .trix-button--active {
+        background: #eff6ff !important;
+        color: #2563eb !important;
+    }
+
+    /* 6. Responsif untuk HP */
+    @media (max-width: 600px) {
+        trix-editor figure.attachment,
+        trix-editor:has(figure.attachment:nth-of-type(2)) figure.attachment {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 0 15px 0 !important;
+            display: block !important;
+        }
+    }
 </style>
+
+<script>
+    document.addEventListener("trix-before-initialize", () => {
+        // Konfigurasi tambahan jika diperlukan
+        Trix.config.blockAttributes.heading1 = {
+            tagName: "h1",
+            terminal: true,
+            breakOnReturn: true,
+            group: false
+        };
+    });
+
+    // Otomatisasi: Menghapus baris kosong yang mengganggu flex layout
+    document.addEventListener("trix-change", function(event) {
+        // Logika opsional jika Anda ingin membersihkan elemen kosong
+    });
+</script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>

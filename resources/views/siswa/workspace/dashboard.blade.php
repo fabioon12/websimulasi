@@ -160,6 +160,19 @@
                             </div>
                            {{-- GRUP TOMBOL AKSES --}}
                             <div class="flex items-center gap-2">
+                                @if($proyek->pengaju_id == auth()->id())
+                                <form action="{{ route('siswa.workspace.destroy', $proyek->id) }}" method="POST" 
+                                    onsubmit="return confirm('Apakah Anda yakin ingin menghapus workspace ini? Semua data logbook dan milestone akan hilang permanen.');" 
+                                    class="inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" 
+                                            class="w-10 h-10 bg-rose-50 text-rose-500 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-sm" 
+                                            title="Hapus Workspace">
+                                        <i class="fas fa-trash-alt text-xs"></i>
+                                    </button>
+                                </form>
+                                @endif
                                 {{-- Tombol Langsung ke Logbook --}}
                                 <a href="{{ route('siswa.logbook.index', $proyek->id) }}" 
                                 class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm" 

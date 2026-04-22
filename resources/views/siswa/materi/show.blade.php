@@ -119,9 +119,9 @@
             <div class="relative">
                 {{-- Content: Bacaan --}}
                 <div x-show="activeTab === 'materi'" x-transition>
-                    <div class="bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-sm">
-                        <article class="max-w-4xl mx-auto">
-                            <div class="prose prose-slate prose-lg max-w-none text-slate-600 font-medium leading-loose">
+                    <div class="bg-white p-6 md:p-10 rounded-[3.5rem] border border-slate-100 shadow-sm w-full overflow-hidden">
+                        <article class="max-w-4xl mx-auto w-full">
+                            <div class="prose prose-slate prose-lg max-w-none text-slate-600 font-medium leading-loose w-full break-words">
                                 {!! $subMateriAktif->bacaan !!}
                             </div>
                         </article>
@@ -249,31 +249,54 @@
                 @endif
 
                 {{-- Content: Coding --}}
-                <div x-show="activeTab === 'coding'" x-cloak x-transition class="grid grid-cols-1 xl:grid-cols-12 gap-8 min-h-[700px]">
-                    <aside class="xl:col-span-4 bg-white rounded-[3rem] border border-slate-100 p-8 shadow-sm flex flex-col h-[700px]">
-                        <h4 class="text-[11px] font-black text-slate-900 uppercase tracking-widest mb-4">Instruksi Tugas</h4>
+                <div x-show="activeTab === 'coding'" x-cloak x-transition class="grid grid-cols-1 xl:grid-cols-12 gap-6 min-h-[700px] h-[calc(100vh-150px)]">
+                    
+                    <aside class="xl:col-span-3 bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm flex flex-col h-full overflow-hidden">
+                        <h4 class="text-[11px] font-black text-slate-900 uppercase tracking-widest mb-6 flex items-center gap-2">
+                            <span class="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                            Instruksi Tugas
+                        </h4>
                         <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                            <div class="text-xs font-bold text-slate-500 leading-relaxed prose prose-sm max-w-none break-words">
+                            <div class="text-xs font-medium text-slate-500 leading-relaxed prose prose-sm max-w-none">
                                 {!! $subMateriAktif->instruksi_coding ?? 'Gunakan editor di samping untuk mencoba kode.' !!}
                             </div>
                         </div>
                     </aside>
 
-                    <div class="xl:col-span-8 h-[700px]">
-                        <div class="bg-[#1e1e1e] rounded-[3rem] border border-slate-800 shadow-2xl overflow-hidden flex flex-col h-full">
+                    <div class="xl:col-span-9 h-full">
+                        <div class="bg-[#1e1e1e] rounded-[2.5rem] border border-slate-800 shadow-2xl overflow-hidden flex flex-col h-full">
+                            
                             <div class="px-8 py-5 bg-[#252526] border-b border-white/5 flex items-center justify-between">
-                                <span class="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">playground.html</span>
-                                <button onclick="runCode()" class="bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">
-                                    <i class="fas fa-play mr-2"></i> Run Code
+                                <div class="flex items-center gap-3">
+                                    <div class="flex gap-1.5">
+                                        <div class="w-3 h-3 rounded-full bg-[#ff5f56] shadow-lg shadow-red-500/20"></div>
+                                        <div class="w-3 h-3 rounded-full bg-[#ffbd2e] shadow-lg shadow-amber-500/20"></div>
+                                        <div class="w-3 h-3 rounded-full bg-[#27c93f] shadow-lg shadow-emerald-500/20"></div>
+                                    </div>
+                                    <span class="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest ml-3">playground.html</span>
+                                </div>
+                                <button onclick="runCode()" class="bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all transform active:scale-95 flex items-center gap-2 shadow-xl shadow-emerald-500/20">
+                                    <i class="fas fa-play text-[8px]"></i> RUN CODE
                                 </button>
                             </div>
-                            <div class="flex-1 flex flex-col overflow-hidden">
-                                <div class="h-1/2">
-                                    <textarea id="code-editor">{{ $subMateriAktif->starter_code ?? "<h1>Hello World</h1>" }}</textarea>
+
+                            <div class="flex-1 flex flex-col lg:flex-row overflow-hidden bg-[#1e1e1e]">
+                                
+                                <div class="w-full lg:w-1/2 relative border-b lg:border-b-0 lg:border-r border-white/5 group bg-[#1e1e1e]">
+                                    <div class="absolute top-4 right-6 text-[9px] text-white/20 font-mono z-10 uppercase tracking-widest pointer-events-none">Editor</div>
+                                    
+                                    <textarea id="code-editor" 
+                                        class="w-full h-full bg-[#1e1e1e] focus:ring-0 border-none" 
+                                        spellcheck="false"
+                                        wrap="off" 
+                                    >{{ $subMateriAktif->starter_code ?? "<h1>Hello World</h1>" }}</textarea>
                                 </div>
-                                <div class="h-1/2 bg-white">
-                                    <iframe id="result-frame" class="w-full h-full border-none"></iframe>
+
+                                <div class="w-full lg:w-1/2 bg-white relative h-full">
+                                    <div class="absolute top-4 right-6 text-[9px] text-slate-300 font-mono z-10 uppercase tracking-widest pointer-events-none">Live Preview</div>
+                                    <iframe id="result-frame" class="w-full h-full border-none bg-white"></iframe>
                                 </div>
+                                
                             </div>
                         </div>
                     </div>
@@ -316,17 +339,18 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
 <style>
-[x-cloak] { display: none !important; }
+    [x-cloak] { display: none !important; }
     
-    /* Font & Base Text */
+    /* 1. Base Text & Font */
     .prose { 
         font-family: 'Inter', sans-serif; 
         color: #334155; /* slate-700 */
         line-height: 1.8;
         text-align: justify;
+        display: block;
     }
 
-    /* Styling Heading 1 (Hasil dari Editor Guru) */
+    /* 2. Heading Styling */
     .prose h1 {
         font-size: 2.25rem;
         font-weight: 800;
@@ -335,43 +359,166 @@
         margin-bottom: 1.5rem;
         line-height: 1.2;
         letter-spacing: -0.02em;
+        clear: both; /* Memastikan teks heading selalu di baris baru setelah gambar */
     }
 
-    /* Grid Gambar Otomatis (Sama dengan Grid 3 Kolom Guru) */
+    .prose p {
+        margin-bottom: 1.5rem;
+        clear: both; /* Mencegah teks naik ke samping gambar jika gambar full */
+    }
+
+    /* 3. List Styling (Fixing Points/Bullets) */
+    .prose ul { 
+        list-style-type: disc !important; 
+        margin-left: 1.5rem !important; 
+        margin-bottom: 1.5rem !important;
+        display: block !important;
+        clear: both;
+    }
+    .prose ol { 
+        list-style-type: decimal !important; 
+        margin-left: 1.5rem !important; 
+        margin-bottom: 1.5rem !important;
+        display: block !important;
+        clear: both;
+    }
+    .prose li { 
+        display: list-item !important; 
+        margin-bottom: 0.5rem; 
+    }
+
+    /* 4. Dynamic Image Grid (Sesuai Logika Admin) */
+    
+    /* Default: 1 Gambar (Full Width) */
     .prose figure.attachment {
+        display: block !important;
+        margin: 0 auto 1.5rem auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        transition: transform 0.3s ease;
+    }
+
+    /* Grid: Jika terdeteksi minimal 2 gambar */
+    .prose:has(figure.attachment:nth-of-type(2)) figure.attachment {
         display: inline-block !important;
         vertical-align: top;
-        margin: 0 5px 15px 0 !important;
-        width: 31% !important; 
-    }
-
-    @media (max-width: 768px) {
-        .prose figure.attachment { width: 48% !important; } /* 2 Kolom di HP */
+        width: 48.5% !important;
+        max-width: 48.5% !important;
+        margin: 0 0.5% 15px 0.5% !important;
     }
 
     .prose figure.attachment img {
         width: 100%;
+        height: auto;
         border-radius: 1.25rem;
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        transition: transform 0.3s ease;
+        border: 1px solid #f1f5f9;
+        object-fit: cover;
     }
 
     .prose figure.attachment img:hover {
         transform: scale(1.02);
     }
 
-    /* List Styling */
-    .prose ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1.5rem; }
-    .prose ol { list-style-type: decimal; margin-left: 1.5rem; margin-bottom: 1.5rem; }
-    .prose li { margin-bottom: 0.5rem; }
+    /* Menghilangkan Metadata (Ukuran File dsb) */
+    .prose .attachment__metadata { 
+        display: none !important; 
+    }
 
-    /* CodeMirror Theme (Siswa Mode - Read Only) */
+    /* Caption Styling */
+    .prose figcaption {
+        text-align: center !important;
+        font-size: 0.85rem;
+        color: #94a3b8;
+        margin-top: 8px;
+    }
+
+    /* 5. CodeMirror Theme (Siswa Mode - Read Only) */
     .CodeMirror { 
         height: auto !important; 
         min-height: 300px;
         border-radius: 1.5rem; 
         font-family: 'Fira Code', monospace;
+        margin-bottom: 1.5rem;
     }
+
+    /* 6. Responsif (Mobile) */
+    @media (max-width: 600px) {
+        /* Di HP tetap 1 kolom walaupun ada banyak gambar */
+        .prose figure.attachment,
+        .prose:has(figure.attachment:nth-of-type(2)) figure.attachment {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 0 1rem 0 !important;
+            display: block !important;
+        }
+        /* Mencegah elemen di dalam materi merusak layout card */
+    .prose {
+        max-width: 100% !important;
+        overflow-wrap: break-word !important;
+        word-wrap: break-word !important;
+    }
+
+    /* 1. Paksa Gambar agar tidak pernah keluar jalur */
+    .prose img {
+        max-width: 100% !important;
+        height: auto !important;
+        display: block;
+        margin: 0 auto;
+    }
+
+    /* 2. Paksa Tabel agar bisa di-scroll ke samping jika terlalu lebar */
+    .prose table {
+        display: block !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        border-collapse: collapse;
+    }
+
+    /* 3. Paksa Blok Kode agar tidak tembus */
+    .prose pre {
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        white-space: pre-wrap !important; /* Membuat kode turun ke baris baru */
+        word-break: break-all !important;
+    }
+
+    /* 4. Paksa elemen iframe atau video agar responsif */
+    .prose iframe, .prose video {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+    #code-editor {
+        background-color: #1e1e1e !important;
+        color: #a5b4fc !important;
+        border: none !important;
+        outline: none !important;
+        padding: 2rem !important;
+        resize: none !important;
+        /* Sembunyikan scrollbar untuk Firefox */
+        scrollbar-width: none; 
+        /* Sembunyikan scrollbar untuk IE/Edge */
+        -ms-overflow-style: none; 
+    }
+
+    /* Khusus Chrome, Safari, dan Edge: Menghilangkan scrollbar secara total */
+    #code-editor::-webkit-scrollbar {
+        width: 0px;
+        height: 0px;
+        display: none;
+    }
+
+    /* Jika Anda masih ingin ada scroll tapi warnanya gelap (tidak putih) */
+    #code-editor::-webkit-scrollbar-track {
+        background: #1e1e1e !important;
+    }
+
+    #code-editor::-webkit-scrollbar-thumb {
+        background: #334155 !important; /* Warna abu gelap untuk pegangan scroll */
+        border-radius: 10px;
+    }
+}
+
 </style>
 
 {{-- Scripts --}}

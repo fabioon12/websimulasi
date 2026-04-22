@@ -173,7 +173,7 @@
                             </a>
 
                             {{-- Button 2: Pantau Progress (Full Width - Solid Emerald) --}}
-                            <a href="{{ route('guru.review.index') }}" 
+                            <a href="{{ route('guru.review.index', $proyek->id) }}" 
                             class="flex-1 inline-flex items-center justify-center gap-3 px-6 py-4 bg-emerald-500 text-white rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600 hover:-translate-y-1 transition-all duration-300 shadow-lg shadow-emerald-100 group/btn">
                                 <i class="fas fa-chart-line text-[12px] group-hover/btn:scale-110 transition-transform"></i>
                                 <span>Pantau Progress</span>

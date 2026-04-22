@@ -64,7 +64,7 @@
         <div class="lg:col-span-2">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-black text-slate-900 italic uppercase">Tugas Masuk Terkini</h2>
-                <a href="{{ route('guru.review.index') }}" class="text-emerald-600 font-bold text-xs uppercase tracking-widest hover:underline">Review Semua →</a>
+                <a href="{{ route('guru.proyek.dashboard') }}" class="text-emerald-600 font-bold text-xs uppercase tracking-widest hover:underline">Review Semua →</a>
             </div>
             
             <div class="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
@@ -99,7 +99,7 @@
                                 <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{{ $sub->proyek->nama_proyek }}</p>
                             </td>
                             <td class="px-6 py-4 text-right">
-                                <a href="{{ route('guru.review.index') }}" class="w-8 h-8 bg-slate-100 text-slate-400 rounded-full inline-flex items-center justify-center hover:bg-emerald-600 hover:text-white transition">
+                                <a href="{{ route('guru.proyek.dashboard') }}" class="w-8 h-8 bg-slate-100 text-slate-400 rounded-full inline-flex items-center justify-center hover:bg-emerald-600 hover:text-white transition">
                                     <i class="fas fa-chevron-right text-[10px]"></i>
                                 </a>
                             </td>

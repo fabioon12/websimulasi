@@ -115,13 +115,15 @@ class SubmateriController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            DB::beginTransaction(); // Gunakan transaksi agar data aman
+            DB::beginTransaction();
 
             $request->validate([
                 'judul' => 'required|string|max:255',
                 'urutan' => 'required|integer',
                 'pdf_file' => 'nullable|file|mimes:pdf|max:10240',
                 'tipe' => 'required|in:materi,kuis',
+                // Tambahkan kategori jika memang dikirim
+                'kategori' => 'nullable|string', 
             ]);
 
             $sub = SubMateris::findOrFail($id);
@@ -131,6 +133,7 @@ class SubmateriController extends Controller
             $sub->tipe = $request->tipe;
 
             if ($request->tipe !== 'kuis') {
+                // PASTIKAN: nama field di FormData JS adalah 'bacaan'
                 $sub->bacaan = $request->bacaan;
                 $sub->video_url = $request->video_url; 
                 $sub->instruksi_coding = $request->instruksi_coding;
@@ -143,12 +146,16 @@ class SubmateriController extends Controller
                     $sub->pdf_path = $request->file('pdf_file')->store('modul_pdf', 'public');
                 }
             } else {
+                // Hapus kuis lama
                 $sub->kuis()->delete(); 
-                $questions = is_array($request->kuis_data) 
-                            ? $request->kuis_data 
-                            : json_decode($request->kuis_data, true);
 
-                if ($questions) {
+                // Handle kuis_data yang dikirim sebagai string JSON
+                $questions = $request->kuis_data;
+                if (is_string($questions)) {
+                    $questions = json_decode($questions, true);
+                }
+
+                if (!empty($questions) && is_array($questions)) {
                     foreach ($questions as $q) {
                         SubMateriKuis::create([
                             'sub_materi_id'     => $sub->id,
@@ -180,7 +187,12 @@ class SubmateriController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+            // DEBUG: Sangat penting untuk melihat pesan error asli jika gagal
+            return response()->json([
+                'status' => 'error', 
+                'message' => 'Gagal Update: ' . $e->getMessage(),
+                'line' => $e->getLine()
+            ], 500);
         }
     }
     public function destroy($id)

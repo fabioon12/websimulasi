@@ -6,19 +6,25 @@ use App\Http\Controllers\Controller;
 use App\Models\PengumpulanTugas;
 use App\Models\ProyekSiswa;
 use App\Models\Roadmap;
+use App\Models\Proyeks;
 
 use Illuminate\Http\Request;
 
 class ReviewTugasController extends Controller
 {
-    public function index()
+    public function index($proyek_id)
     {
+        $proyek = Proyeks::findOrFail($proyek_id);
+
+        // 2. Filter tugas berdasarkan proyek_id yang sedang dibuka
         $tugasMasuk = PengumpulanTugas::with(['user', 'proyek', 'roadmap'])
+            ->where('proyek_id', $proyek_id) // Filter krusial
             ->where('status', 'pending')
             ->latest()
             ->get();
 
-        return view('guru.reviewtugas.index', compact('tugasMasuk'));
+        // 3. Kirim variabel $proyek ke view untuk judul/header
+        return view('guru.reviewtugas.index', compact('tugasMasuk', 'proyek'));
     }
     public function update(Request $request, $id)
     {
@@ -56,4 +62,5 @@ class ReviewTugasController extends Controller
             $partisipasi->update(['progress' => $progress]);
         }
     }
+    
 }

@@ -2,61 +2,121 @@
 
 @section('title', 'Workspace - ' . $partisipasi->proyek->nama_proyek)
 
-
 <link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2.0.8/dist/trix.css">
 <style>
-    /* Styling Toolbar Trix */
-    trix-toolbar .trix-button span { display: none !important; }
-    trix-toolbar .trix-button {
-        width: 2.5rem !important;
-        height: 2.5rem !important;
-        border: none !important;
-        filter: invert(1) brightness(2);
-        opacity: 0.6;
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-    }
-    trix-toolbar .trix-button--active {
-        background: #2563eb !important;
-        opacity: 1 !important;
-        border-radius: 0.5rem !important;
-        filter: none !important;
-    }
-    trix-toolbar .trix-button-row {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border: none !important;
-        border-radius: 1rem !important;
-        margin-bottom: 0.75rem !important;
-        display: flex !important;
-        flex-wrap: wrap !important;
-        gap: 2px;
-        padding: 4px !important;
+    /* ============================================================
+       1. BASE & TYPOGRAPHY (UNTUK SEMUA AREA)
+       ============================================================ */
+    .instruction-content, .prose-invert {
+        line-height: 1.8;
+        font-size: 0; /* Menghilangkan gap spasi antar gambar grid */
     }
 
-    /* Styling Editor Area */
-    trix-editor {
-        background-color: rgba(255, 255, 255, 0.03) !important;
-        border: 2px solid rgba(255, 255, 255, 0.1) !important;
+    /* Mengembalikan font-size teks agar tidak hilang */
+    .instruction-content p, .instruction-content span, .instruction-content li,
+    .prose-invert p, .prose-invert span, .prose-invert li {
+        font-size: 0.875rem !important; /* text-sm */
+        color: inherit;
+    }
+
+    /* --- HEADING 1 STYLE --- */
+    .instruction-content h1, trix-editor h1, .prose-invert h1 {
+        display: block !important;
+        width: 100% !important;
+        clear: both; /* Agar tidak sejajar dengan gambar */
+        font-weight: 800 !important;
+        text-transform: uppercase;
+        margin-top: 1.5rem !important;
+        margin-bottom: 1rem !important;
+        line-height: 1.2 !important;
+        letter-spacing: -0.025em;
+    }
+    /* Warna H1: Gelap untuk box putih, Biru untuk box gelap */
+    .instruction-content h1 { color: #0f172a !important; font-size: 1.75rem !important; }
+    trix-editor h1, .prose-invert h1 { color: #60a5fa !important; font-size: 1.5rem !important; }
+
+    /* --- LIST STYLE (BULLET & NUMBERING) --- */
+    .instruction-content ul, .prose-invert ul, trix-editor ul { 
+        list-style-type: disc !important; 
+        padding-left: 1.5rem !important; 
+    }
+    .instruction-content ol, .prose-invert ol, trix-editor ol { 
+        list-style-type: decimal !important; 
+        padding-left: 1.5rem !important; 
+    }
+    .instruction-content ul, .instruction-content ol,
+    .prose-invert ul, .prose-invert ol,
+    trix-editor ul, trix-editor ol {
+        display: block !important;
+        width: 100% !important;
+        clear: both;
+        margin-top: 0.5rem !important;
+        margin-bottom: 1rem !important;
+    }
+    .instruction-content li, .prose-invert li, trix-editor li {
+        margin-bottom: 0.25rem !important;
+        display: list-item !important; /* Memastikan peluru muncul */
+    }
+
+    /* ============================================================
+       2. GRID 2 KOLOM (GAMBAR FULL / TIDAK TERPOTONG)
+       ============================================================ */
+    .instruction-content figure, 
+    .instruction-content attachment,
+    trix-editor figure.attachment,
+    .prose-invert figure {
+        display: inline-block !important;
+        width: 49% !important; /* 2 Kolom presisi */
+        margin: 0.5% !important;
+        vertical-align: top !important;
+        padding: 0 !important;
+    }
+
+    .instruction-content figure img, 
+    trix-editor figure.attachment img,
+    .prose-invert figure img {
+        width: 100% !important;
+        height: auto !important; /* Gambar tampil utuh (TIDAK TERPOTONG) */
+        display: block !important;
         border-radius: 1.5rem !important;
-        color: #e2e8f0 !important;
-        min-height: 150px !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin: 0 !important;
+    }
+
+    /* ============================================================
+       3. TRIX EDITOR DARK MODE (HASIL PEKERJAAN)
+       ============================================================ */
+    trix-editor {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 1.5rem !important;
+        color: #f8fafc !important;
+        min-height: 200px !important;
         padding: 1.25rem !important;
         outline: none !important;
     }
-    trix-editor:focus {
-        border-color: #2563eb !important;
-        background-color: rgba(255, 255, 255, 0.05) !important;
-    }
-    .trix-button-group--file-tools { display: none !important; }
-    .trix-content { color: #e2e8f0 !important; }
-    .trix-content ul { list-style-type: disc !important; padding-left: 1.5rem !important; }
-    .trix-content ol { list-style-type: decimal !important; padding-left: 1.5rem !important; }
 
-    /* Custom Prose Styling */
-    .prose img { border-radius: 1.5rem; margin: 2rem 0; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
-    .prose ul { list-style-type: disc; padding-left: 1.5rem; }
-    .prose strong { color: #0f172a; font-weight: 800; }
+    /* Toolbar Trix agar terlihat di Background Gelap */
+    trix-toolbar .trix-button-row { 
+        background: rgba(255, 255, 255, 0.03) !important; 
+        border-radius: 1rem !important; 
+        border: none !important; 
+        margin-bottom: 0.5rem !important; 
+    }
+    trix-toolbar .trix-button { filter: invert(1) brightness(2); opacity: 0.6; }
+    trix-toolbar .trix-button--active { background: #3b82f6 !important; filter: none !important; opacity: 1 !important; }
+
+    /* Responsive untuk HP */
+    @media (max-width: 640px) {
+        .instruction-content figure, trix-editor figure.attachment, .prose-invert figure {
+            width: 100% !important;
+            margin: 0.5rem 0 !important;
+            display: block !important;
+        }
+    }
+
+    /* Hilangkan Elemen Sampah Trix */
+    figcaption, .attachment__metadata, .attachment__progress { display: none !important; }
 </style>
 
 @section('content')
@@ -164,7 +224,7 @@
                         Instruksi Step {{ $task->urutan }}
                     </span>
                     <h2 class="text-3xl font-black text-slate-900">{{ $task->judul_tugas }}</h2>
-                    <div class="prose prose-slate max-w-none text-slate-600 font-medium">
+                    <div class="prose prose-slate max-w-none text-slate-600 font-medium instruction-content overflow-hidden">
                         {!! $task->instruksi !!}
                     </div>
                 </div>
@@ -255,62 +315,58 @@
 {{-- Scripts --}}
 <script src="https://unpkg.com/trix@2.0.8/dist/trix.umd.min.js"></script>
 <script>
+    // 1. Trix Configuration (Heading 1)
+    document.addEventListener("trix-before-initialize", () => {
+        Trix.config.blockAttributes.heading1 = {
+            tagName: "h1",
+            terminal: true,
+            breakOnReturn: true,
+            group: false
+        };
+    });
+
+    // 2. Logic Navigasi Detail Tugas
     function showTaskDetail(taskId) {
         document.getElementById('welcome-screen').classList.add('hidden');
         document.querySelectorAll('.task-detail-content').forEach(el => el.classList.add('hidden'));
-        document.getElementById('task-detail-' + taskId).classList.remove('hidden');
+        
+        const target = document.getElementById('task-detail-' + taskId);
+        if(target) target.classList.remove('hidden');
         
         document.querySelectorAll('.task-card').forEach(el => {
             el.classList.remove('border-blue-500', 'bg-blue-50/30', 'ring-4', 'ring-blue-500/10');
         });
         
         const activeBtn = document.getElementById('btn-task-' + taskId);
-        activeBtn.classList.add('border-blue-500', 'bg-blue-50/30', 'ring-4', 'ring-blue-500/10');
+        if(activeBtn) activeBtn.classList.add('border-blue-500', 'bg-blue-50/30', 'ring-4', 'ring-blue-500/10');
         
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // Trix Attachment Logic
+    // 3. Trix Attachment Logic (Upload)
     (function() {
         var HOST = "{{ route('siswa.trix.upload') }}"; 
 
         document.addEventListener("trix-attachment-add", function(event) {
             if (event.attachment.file) {
-                uploadFileAttachment(event.attachment);
+                const file = event.attachment.file;
+                const formData = new FormData();
+                formData.append("file", file);
+                formData.append("_token", "{{ csrf_token() }}");
+
+                const xhr = new XMLHttpRequest();
+                xhr.open("POST", HOST, true);
+                xhr.upload.onprogress = (e) => event.attachment.setUploadProgress(e.loaded / e.total * 100);
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        const data = JSON.parse(xhr.responseText);
+                        return event.attachment.setAttributes({ url: data.url, href: data.url });
+                    }
+                    event.attachment.remove();
+                };
+                xhr.send(formData);
             }
         });
-
-        function uploadFileAttachment(attachment) {
-            uploadFile(attachment.file, setProgress, setAttributes);
-            function setProgress(progress) { attachment.setUploadProgress(progress); }
-            function setAttributes(attributes) { attachment.setAttributes(attributes); }
-        }
-
-        function uploadFile(file, progressCallback, successCallback) {
-            var formData = new FormData();
-            formData.append("Content-Type", file.type);
-            formData.append("file", file);
-
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", HOST, true);
-            xhr.setRequestHeader('X-CSRF-TOKEN', '{{ csrf_token() }}');
-
-            xhr.upload.addEventListener("progress", function(event) {
-                var progress = event.loaded / event.total * 100;
-                progressCallback(progress);
-            });
-
-            xhr.addEventListener("load", function(event) {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    var data = JSON.parse(xhr.responseText);
-                    successCallback({ url: data.url, href: data.url });
-                } else {
-                    console.error("Server Response:", xhr.responseText);
-                    alert("Gagal upload.");
-                }
-            });
-            xhr.send(formData);
-        }
     })();
 </script>
 @endsection

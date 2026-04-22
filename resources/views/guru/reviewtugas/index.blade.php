@@ -2,33 +2,87 @@
 
 @section('title', 'Review Tugas - Mentor Dashboard')
 
-@push('styles')
+
 <link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2.0.8/dist/trix.css">
 <style>
-    /* Styling Konten Trix agar gambar dan teks rapi */
-    .trix-content {
-        line-height: 1.6;
-        color: #334155;
+    /* ============================================================
+       BASE CONTAINER (Modal & Instruksi)
+       ============================================================ */
+    .instruction-content, 
+    .trix-content, 
+    #noteContent {
+        display: flex !important;
+        flex-wrap: wrap !important; /* Kunci agar bisa berjajar */
+        gap: 10px !important; /* Jarak antar gambar */
+        line-height: 1.8;
     }
-    .trix-content img { 
-        border-radius: 1rem; 
-        max-width: 100%; 
-        height: auto; 
-        margin: 1.5rem auto;
-        display: block;
-        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+
+    /* Pastikan teks (p, h1, li) tetap mengambil lebar penuh (100%) */
+    .instruction-content p, .instruction-content h1, .instruction-content ul, .instruction-content ol,
+    .trix-content p, .trix-content h1, .trix-content ul, .trix-content ol,
+    #noteContent p, #noteContent h1, #noteContent ul, #noteContent ol {
+        flex: 0 0 100% !important; /* Paksa teks memenuhi satu baris */
+        font-size: 0.95rem !important;
+        margin-bottom: 0.5rem;
     }
-    .trix-content ul { list-style-type: disc !important; padding-left: 1.5rem !important; margin-bottom: 1rem; }
-    .trix-content ol { list-style-type: decimal !important; padding-left: 1.5rem !important; margin-bottom: 1rem; }
-    
-    /* Custom Scrollbar untuk Table */
-    .overflow-x-auto::-webkit-scrollbar { height: 6px; }
-    .overflow-x-auto::-webkit-scrollbar-thumb {
-        background: #e2e8f0;
-        border-radius: 10px;
+
+    /* --- HEADING 1 STYLE --- */
+    .instruction-content h1, .trix-content h1, #noteContent h1 {
+        font-size: 1.75rem !important;
+        font-weight: 900 !important;
+        color: #0f172a !important;
+        text-transform: uppercase;
+        margin-top: 1rem !important;
+    }
+
+    /* --- LIST STYLE (BULLET & NUMBERING) --- */
+    .instruction-content ul, .trix-content ul, #noteContent ul { list-style-type: disc !important; padding-left: 2rem !important; }
+    .instruction-content ol, .trix-content ol, #noteContent ol { list-style-type: decimal !important; padding-left: 2rem !important; }
+    .instruction-content li, .trix-content li, #noteContent li { display: list-item !important; margin-bottom: 0.3rem; }
+
+    /* ============================================================
+       GRID 2 KOLOM (GAMBAR)
+       ============================================================ */
+    /* Targetkan elemen attachment Trix */
+    .instruction-content figure, 
+    .instruction-content attachment,
+    .trix-content figure, 
+    .trix-content attachment,
+    #noteContent figure,
+    #noteContent attachment {
+        /* KUNCI: Lebar diatur agar 2 gambar muat dalam 1 baris (100% / 2 - gap) */
+        flex: 0 0 calc(50% - 10px) !important; 
+        max-width: calc(50% - 10px) !important;
+        margin: 0 !important;
+        display: block !important;
+    }
+
+    /* Pastikan gambar di dalamnya tidak terpotong */
+    .instruction-content figure img, 
+    .trix-content figure img,
+    #noteContent figure img {
+        width: 100% !important;
+        height: auto !important; /* Gambar tampil penuh/utuh */
+        border-radius: 1.5rem !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        object-fit: contain !important;
+    }
+
+    /* ============================================================
+       RESPONSIVE & CLEANUP
+       ============================================================ */
+    @media (max-width: 640px) {
+        .instruction-content figure, .trix-content figure, #noteContent figure {
+            flex: 0 0 100% !important; /* Balik ke 1 kolom di HP */
+            max-width: 100% !important;
+        }
+    }
+
+    /* Sembunyikan caption & metadata agar grid tidak rusak */
+    figcaption, .attachment__metadata, .attachment__progress {
+        display: none !important;
     }
 </style>
-@endpush
 
 @section('content')
 <div class="max-w-7xl mx-auto px-6 py-10 pb-24 space-y-10">
@@ -127,13 +181,14 @@
 
 {{-- MODAL LIHAT CATATAN --}}
 <div id="modalNote" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4">
-    <div class="bg-white w-full max-w-3xl rounded-[3rem] p-10 shadow-2xl relative border border-white/20 animate-in zoom-in duration-300">
+    <div class="bg-white w-full max-w-4xl rounded-[3rem] p-10 shadow-2xl relative border border-white/20 animate-in zoom-in duration-300">
         <button onclick="closeNote()" class="absolute top-8 right-8 text-slate-300 hover:text-rose-500 transition">
             <i class="fas fa-times text-xl"></i>
         </button>
         <h2 class="text-2xl font-black text-slate-900 mb-6 italic uppercase tracking-tighter">Catatan Pekerjaan Siswa</h2>
-        <div id="noteContent" class="trix-content prose prose-slate max-w-none text-slate-600 font-medium bg-slate-50 p-8 rounded-3xl border border-slate-100 max-h-[65vh] overflow-y-auto">
-            {{-- Konten Trix (termasuk gambar) akan muncul di sini --}}
+        
+        <div id="noteContent" class="trix-content instruction-content prose prose-slate max-w-none text-slate-600 font-medium bg-slate-50 p-8 rounded-3xl border border-slate-100 max-h-[65vh] overflow-y-auto">
+            {{-- Konten Trix --}}
         </div>
     </div>
 </div>
